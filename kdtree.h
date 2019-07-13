@@ -34,19 +34,6 @@ private:
 
 	std::unique_ptr<node_t>	m_root;
 
-	template <typename IteratorType>
-	struct point_index
-	{
-		PointType 		pt;
-		size_t			dim;
-		IteratorType	idx;
-
-		bool const operator<(point_index const& cmp) const
-		{
-			return pt[dim] < cmp.pt[dim];
-		}
-	};
-
 	template <typename InputIterator>
 	struct node_stack_entry
 	{
