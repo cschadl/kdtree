@@ -112,7 +112,7 @@ public:
 
 			node_t* node = entry.node;
 
-			auto median = add_node(entry.node, entry.begin, entry.end, ++depth);
+			auto median = add_node(entry.node, entry.begin, entry.end, depth++);
 
 			if (std::distance(entry.begin, median) > 0)
 			{
