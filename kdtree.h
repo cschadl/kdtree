@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <memory>
 #include <stack>
+#include <limits>
 
 template <typename PointType>
 struct point_traits
@@ -37,7 +38,7 @@ private:
 	template <typename InputIterator>
 	struct node_stack_entry
 	{
-		node_t * 		node;
+		node_t* 			node;
 		InputIterator	begin;
 		InputIterator	end;
 
@@ -49,6 +50,20 @@ private:
 
 		}
 	};
+
+	using value_type = typename point_traits<PointType>::value_type;
+
+	static typename point_traits<PointType>::value_type distance_sq(PointType const& pt1, PointType const& pt2)
+	{
+		value_type distance_sq = value_type(0);
+		for (size_t i = 0 ; i < Dim ; i++)
+		{
+			value_type const dist_i = pt2[i] - pt1[i];
+			distance_sq += (dist_i * dist_i);
+		}
+
+		return distance_sq;
+	}
 
 public:
 	kd_tree() = default;
@@ -72,8 +87,9 @@ public:
 
 			node_t* node = entry.node;
 
-			size_t dim = depth++ % Dim;
-			size_t n_elements = std::distance(entry.begin, entry.end);
+			size_t const dim = depth++ % Dim;
+			size_t const n_elements = std::distance(entry.begin, entry.end);
+
 			std::nth_element(entry.begin, entry.begin + n_elements / 2, entry.end,
 				[dim](auto pt1, auto pt2)
 				{
@@ -98,4 +114,65 @@ public:
 			}
 		}
 	}
+
+	PointType nn(PointType const& p) const
+	{
+		value_type min_dist_sq = std::numeric_limits<value_type>::max();
+		PointType min_pt;
+		for (size_t i = 0 ; i < Dim ; i++)
+			min_pt[i] = min_dist_sq;
+
+		if (!m_root)
+			return min_pt;
+
+		std::stack<node_t*> node_stack;
+		node_stack.push(m_root.get());
+
+		while (!node_stack.empty())
+		{
+			node_t* node = node_stack.top();
+			node_stack.pop();
+
+			// Get the distance from the min_pt to this node
+			value_type const dist_sq = distance_sq(p, node->val);
+			if (dist_sq < min_dist_sq)
+			{
+				min_dist_sq = dist_sq;
+				min_pt = node->val;
+			}
+
+			// Add the left and right nodes to the stack and keep going
+			value_type const left_dist_sq = node->left_child ?
+					distance_sq(p, node->left_child->val) :
+					std::numeric_limits<value_type>::max();
+
+			value_type const right_dist_sq = node->right_child ?
+					distance_sq(p, node->right_child->val) :
+					std::numeric_limits<value_type>::max();
+
+			node_t* min_node = nullptr;
+			if (left_dist_sq < right_dist_sq)
+				min_node = node->left_child.get();
+			else if (right_dist_sq < left_dist_sq)
+				min_node = node->right_child.get();
+
+			if (min_node)
+				node_stack.push(min_node);
+		}
+
+		return min_pt;
+	}
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
