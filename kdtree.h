@@ -63,33 +63,6 @@ private:
 		}
 	};
 
-public:	// TODO - test and make private
-	template <typename InputIterator>
-	static InputIterator get_median(InputIterator begin, InputIterator end, size_t dim)
-	{
-		std::vector< point_index<InputIterator> > point_its(std::distance(begin, end));
-		auto oi = point_its.begin();
-		for (auto it = begin ; it != end ; ++it)
-			*oi++ = point_index<InputIterator>{*it, dim, it};
-
-		std::nth_element(point_its.begin(), point_its.begin() + point_its.size() / 2, point_its.end());
-
-		auto point_its_median = point_its.begin() + point_its.size() / 2;
-		return point_its_median->idx;
-	}
-
-	template <typename InputIterator>
-	InputIterator add_node(node_t * node, InputIterator begin, InputIterator end, size_t depth)
-	{
-		size_t dim = depth % Dim;
-		auto median_it = get_median(begin, end, dim);
-
-		node->val = *median_it;
-		node->n_dim = dim;
-
-		return median_it;
-	}
-
 public:
 	kd_tree() = default;
 
@@ -112,7 +85,17 @@ public:
 
 			node_t* node = entry.node;
 
-			auto median = add_node(entry.node, entry.begin, entry.end, depth++);
+			size_t dim = depth++ % Dim;
+			size_t n_elements = std::distance(entry.begin, entry.end);
+			std::nth_element(entry.begin, entry.begin + n_elements / 2, entry.end,
+				[dim](auto pt1, auto pt2)
+				{
+					return pt1[dim] < pt2[dim];
+				});
+
+			InputIterator median = entry.begin + n_elements / 2;
+
+			node->val = *median;
 
 			if (std::distance(entry.begin, median) > 0)
 			{

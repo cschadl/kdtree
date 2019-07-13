@@ -21,4 +21,6 @@ int main(int argc, char** argv)
 
 	kd_tree<point_t> tree;
 	tree.build(points.begin(), points.end());
+
+	std::cout << "Created tree" << std::endl;
 }
