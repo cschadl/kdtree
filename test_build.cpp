@@ -6,12 +6,6 @@
 
 using point_t = std::array<double, 2>;
 
-template <>
-struct point_traits<point_t>
-{
-	using value_type = point_t::value_type;
-	static constexpr size_t dim() { return 2; }
-};
 
 int main(int argc, char** argv)
 {

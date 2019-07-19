@@ -8,12 +8,8 @@
 #include <stack>
 #include <limits>
 
-template <typename PointType>
-struct point_traits
-{
-	using value_type = typename PointType::value_type;
-	static constexpr size_t dim() { return PointType::Dim; }
-};
+#include <bbox.h>
+
 
 template <typename PointType, size_t Dim = point_traits<PointType>::dim()>
 class kd_tree
@@ -63,6 +59,11 @@ private:
 		}
 
 		return distance_sq;
+	}
+
+	static typename point_traits<PointType>::value_type distance(PointType const& pt1, PointType const& pt2)
+	{
+		return std::sqrt(distance_sq(pt1, pt2));
 	}
 
 public:
@@ -128,36 +129,25 @@ public:
 		std::stack<node_t*> node_stack;
 		node_stack.push(m_root.get());
 
+		//size_t depth = 0;
+
+		// To search, we explore the tree, pruning nodes that are
+		// too far away from the search point.
+
 		while (!node_stack.empty())
 		{
 			node_t* node = node_stack.top();
 			node_stack.pop();
 
 			// Get the distance from the min_pt to this node
-			value_type const dist_sq = distance_sq(p, node->val);
-			if (dist_sq < min_dist_sq)
+			value_type const dist_this_node = distance(p, node->val);
+			if (dist_this_node < min_dist_sq)
 			{
-				min_dist_sq = dist_sq;
+				min_dist_sq = dist_this_node;
 				min_pt = node->val;
 			}
 
-			// Add the left and right nodes to the stack and keep going
-			value_type const left_dist_sq = node->left_child ?
-					distance_sq(p, node->left_child->val) :
-					std::numeric_limits<value_type>::max();
-
-			value_type const right_dist_sq = node->right_child ?
-					distance_sq(p, node->right_child->val) :
-					std::numeric_limits<value_type>::max();
-
-			node_t* min_node = nullptr;
-			if (left_dist_sq < right_dist_sq)
-				min_node = node->left_child.get();
-			else if (right_dist_sq < left_dist_sq)
-				min_node = node->right_child.get();
-
-			if (min_node)
-				node_stack.push(min_node);
+			//size_t const s = depth++ % Dim;
 		}
 
 		return min_pt;
