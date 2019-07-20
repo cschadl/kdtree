@@ -21,7 +21,7 @@ namespace tut
 	{
 		set_test_name("Intersects");
 
-		bbox2d_t bbox1( {-4, 1}, {6, 6} );
+		bbox2d_t bbox1( {-4,-1}, {6, 6} );
 		bbox2d_t bbox2( {-1,-3}, {4, 7} );
 
 		ensure(bbox1.intersects(bbox2));
@@ -55,8 +55,8 @@ namespace tut
 	{
 		set_test_name("Intersection");
 
-		bbox2d_t bbox1( {-4, 1}, {6, 6} );
-		bbox2d_t bbox2( {-1,-3}, {4, 7} );
+		bbox2d_t bbox1( {-4,-1}, { 6, 6} );
+		bbox2d_t bbox2( {-1,-3}, { 4, 7} );
 
 		bbox2d_t bbox1_2({1, 1}, {-1, -1});
 		ensure(bbox1.intersection(bbox2, bbox1_2));

@@ -92,7 +92,7 @@ public:
 
 		PointType intersect_max;
 		for (size_t i = 0 ; i < Dim ; i++)
-			intersect_max[i] = std::min(m_min[i], rhs.m_max[i]);
+			intersect_max[i] = std::min(m_max[i], rhs.m_max[i]);
 
 		out_intersection.m_min = intersect_min;
 		out_intersection.m_max = intersect_max;
