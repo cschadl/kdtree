@@ -41,6 +41,11 @@ public:
 
 	}
 
+	bool operator==(bbox<PointType, Dim> const& rhs) const
+	{
+		return m_min == rhs.m_min && m_max == rhs.m_max;
+	}
+
 	bool valid() const
 	{
 		for (size_t i = 0 ; i < Dim ; i++)
