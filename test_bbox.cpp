@@ -62,6 +62,21 @@ namespace tut
 		ensure(bbox1.intersection(bbox2, bbox1_2));
 		ensure(bbox1_2 == bbox2d_t({-1, -1}, {4, 6}));
 	}
+
+	template <> template <>
+	void bbox_test_t::object::test<5>()
+	{
+		set_test_name("split");
+
+		bbox2d_t bbox( {-1,-3}, { 4, 7} );
+
+		bbox2d_t bbox_lt = { { 1, 1}, {-1, -1}};
+		bbox2d_t bbox_gt = { { 1, 1}, {-1, -1}};
+
+		ensure(bbox.split(0, 1.5, bbox_lt, bbox_gt));
+		ensure(bbox_lt == bbox2d_t{ { -1, -3 }, {1.5, 7}});
+		ensure(bbox_gt == bbox2d_t{ { 1.5,-3}, { 4, 7 }});
+	}
 };
 
 

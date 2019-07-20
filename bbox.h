@@ -99,4 +99,24 @@ public:
 
 		return true;
 	}
+
+	bool split(size_t dim, value_type val, bbox& out_lt_bbox, bbox& out_gt_bbox) const
+	{
+		if (dim >= Dim)
+			return false;
+
+		if (val < m_min[dim] || val > m_max[dim])
+			return false;
+
+		auto lt_bbox_max = m_max;
+		lt_bbox_max[dim] = val;
+
+		auto gt_bbox_min = m_min;
+		gt_bbox_min[dim] = val;
+
+		out_lt_bbox = { m_min, lt_bbox_max };
+		out_gt_bbox = { gt_bbox_min, m_max };
+
+		return true;
+	}
 };
