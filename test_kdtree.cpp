@@ -47,9 +47,14 @@ namespace tut
 		kd_tree<point2d_t> tree;
 		tree.build(points.begin(), points.end());
 
-		point2d_t q_pt{7.5, 5.0};
-		point2d_t near_q = tree.nn(q_pt);
+		point2d_t q_pt1{7.5, 5.0};
+		point2d_t near_q1 = tree.nn(q_pt1);
 
-		ensure(near_q != point2d_t{9, 6});
+		ensure(near_q1 == point2d_t{9, 6});
+
+		point2d_t q_pt2{7.5, 0.5};
+		point2d_t near_q2 = tree.nn(q_pt2);
+
+		ensure(near_q2 == point2d_t{8, 1});
 	}
 };

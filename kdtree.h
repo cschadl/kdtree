@@ -183,13 +183,18 @@ public:
 			node_bbox.split(s, node->val[s], left_bbox, right_bbox);
 
 			auto left_node = node->left_child.get();
-			auto right_node = node->right_child.get();
+			value_type dist_to_left = left_node ? distance(p, left_node->val) : std::numeric_limits<value_type>::max();
 
-			if (left_node && left_node->val[s] < p[s])
+			auto right_node = node->right_child.get();
+			value_type dist_to_right = right_node ? distance(p, right_node->val) : std::numeric_limits<value_type>::max();
+
+
+			if ((left_node /* && node->val[s] < p[s] */) || dist_to_left < min_dist_sq)
 			{
 				node_stack.emplace(query_stack_entry{left_node, left_bbox});
 			}
-			else if (right_node && right_node->val[s] >= p[s])
+
+			if ((right_node /* && node->val[s] >= p[s] */) || dist_to_right < min_dist_sq)
 			{
 				node_stack.emplace(query_stack_entry{right_node, right_bbox});
 			}
