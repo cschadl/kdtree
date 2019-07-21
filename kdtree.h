@@ -166,10 +166,13 @@ public:
 
 		while (!node_stack.empty())
 		{
-			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
-
 			auto ns_entry = node_stack.top();
 			node_stack.pop();
+
+			if (!ns_entry.node)
+				continue;
+
+			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
 
 			node_t* node = ns_entry.node;
 			bbox<PointType> const& node_bbox = ns_entry.node_bbox;
@@ -191,12 +194,16 @@ public:
 			bbox<PointType> left_bbox, right_bbox;
 			node_bbox.split(s, node->val[s], left_bbox, right_bbox);
 
-
-			if (node->left_child)
+			if (p[s] < node->val[s])
+			{
 				node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
-
-			if (node->right_child)
 				node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
+			}
+			else
+			{
+				node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
+				node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
+			}
 		}
 
 		return min_pt;
