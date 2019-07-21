@@ -30,6 +30,7 @@ private:
 	using node_t = node<PointType>;
 
 	std::unique_ptr<node_t>	m_root;
+	size_t 						m_q_nodes_visited;	// Nodes visited for last query (debugging)
 
 	template <typename InputIterator>
 	struct node_stack_entry
@@ -80,7 +81,11 @@ private:
 	}
 
 public:
-	kd_tree() = default;
+	kd_tree()
+		: m_q_nodes_visited(0)
+	{
+
+	}
 
 	template <typename InputIterator>
 	void build(InputIterator begin, InputIterator end)
@@ -131,6 +136,8 @@ public:
 
 	PointType nn(PointType const& p) const
 	{
+		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
+
 		value_type min_dist_sq = std::numeric_limits<value_type>::max();
 
 		// Initialize min_pt to ( max, max, ..., max)
@@ -159,6 +166,8 @@ public:
 
 		while (!node_stack.empty())
 		{
+			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
+
 			auto ns_entry = node_stack.top();
 			node_stack.pop();
 
@@ -182,25 +191,20 @@ public:
 			bbox<PointType> left_bbox, right_bbox;
 			node_bbox.split(s, node->val[s], left_bbox, right_bbox);
 
-			auto left_node = node->left_child.get();
-			value_type dist_to_left = left_node ? distance(p, left_node->val) : std::numeric_limits<value_type>::max();
 
-			auto right_node = node->right_child.get();
-			value_type dist_to_right = right_node ? distance(p, right_node->val) : std::numeric_limits<value_type>::max();
+			if (node->left_child)
+				node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
 
-
-			if ((left_node /* && node->val[s] < p[s] */) || dist_to_left < min_dist_sq)
-			{
-				node_stack.emplace(query_stack_entry{left_node, left_bbox});
-			}
-
-			if ((right_node /* && node->val[s] >= p[s] */) || dist_to_right < min_dist_sq)
-			{
-				node_stack.emplace(query_stack_entry{right_node, right_bbox});
-			}
+			if (node->right_child)
+				node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
 		}
 
 		return min_pt;
+	}
+
+	size_t last_q_nodes_visited() const
+	{
+		return m_q_nodes_visited;
 	}
 };
 
