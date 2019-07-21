@@ -101,6 +101,7 @@ namespace tut
 			});
 
 		ensure(nn_kdtree == nn_actual);
+		ensure(tree.last_q_nodes_visited() < n_pts);
 	}
 };
 
