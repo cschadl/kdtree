@@ -33,8 +33,8 @@ public:
 	{
 		if (size() == max_size())
 		{
-			auto min_element = std::min_element(m_heap.begin(), m_heap.end());
-			if (t > *min_element)
+			auto min_element = std::min_element(m_heap.begin(), m_heap.end(), m_comp);
+			if (!m_comp(t, *min_element))
 			{
 				*min_element = t;
 				std::make_heap(m_heap.begin(), m_heap.end(), m_comp);
@@ -49,7 +49,7 @@ public:
 
 	void pop()
 	{
-		std::pop_heap(m_heap.begin(), m_heap.end());
+		std::pop_heap(m_heap.begin(), m_heap.end(), m_comp);
 		m_heap.pop_back();
 	}
 };

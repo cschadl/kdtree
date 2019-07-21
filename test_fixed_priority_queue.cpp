@@ -62,4 +62,57 @@ namespace tut
 		fx_max_queue.pop();
 		ensure(fx_max_queue.empty());
 	}
+
+	template <> template <>
+	void fixed_priority_queue_test_t::object::test<2>()
+	{
+		set_test_name ("min heap full");
+
+		::fixed_priority_queue<int, std::greater<int>> fx_min_queue(5);
+		for (size_t i = 0 ; i < 5 ; i++)
+			fx_min_queue.push(std::numeric_limits<int>::max());
+
+		ensure(!fx_min_queue.empty());
+		ensure(fx_min_queue.top() == std::numeric_limits<int>::max());
+
+		fx_min_queue.push(10);
+		ensure(fx_min_queue.top() == 10);
+
+		fx_min_queue.push(5);
+		ensure(fx_min_queue.top() == 5);
+
+		fx_min_queue.push(7);
+		ensure(fx_min_queue.top() == 5);
+
+		fx_min_queue.push(-1);
+		ensure(fx_min_queue.top() == -1);
+
+		fx_min_queue.push(0);
+		ensure(fx_min_queue.top() == -1);
+
+		fx_min_queue.pop();
+		ensure(fx_min_queue.top() == 0);
+
+		fx_min_queue.pop();
+		ensure(fx_min_queue.top() == 5);
+
+		fx_min_queue.pop();
+		ensure(fx_min_queue.top() == 7);
+
+		fx_min_queue.pop();
+		ensure(fx_min_queue.top() == 10);
+
+		fx_min_queue.pop();
+		ensure(fx_min_queue.empty());
+	}
 };
+
+
+
+
+
+
+
+
+
+
