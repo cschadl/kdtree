@@ -5,12 +5,16 @@
 #include <iostream>
 #include <array>
 #include <vector>
+#include <limits>
 
 namespace tut
 {
 	struct kdtree_test_data
 	{
 		using point2d_t = std::array<double, 2>;
+
+		static constexpr double min_val = std::numeric_limits<double>::min();
+		static constexpr double max_val = std::numeric_limits<double>::max();
 	};
 
 	using kdtree_test_t = test_group<kdtree_test_data, 5>;
@@ -43,9 +47,9 @@ namespace tut
 		kd_tree<point2d_t> tree;
 		tree.build(points.begin(), points.end());
 
-		point2d_t q_pt{7.5, .5};
+		point2d_t q_pt{7.5, 5.0};
 		point2d_t near_q = tree.nn(q_pt);
 
-		// ensure near_q = whatever (fails)
+		ensure(near_q != point2d_t{9, 6});
 	}
 };

@@ -32,7 +32,14 @@ private:
 	using value_type = typename point_traits<PointType>::value_type;
 
 public:
-	bbox() = delete;
+	bbox()
+	{
+		for (size_t i = 0 ; i < Dim ; i++)
+		{
+			m_min[i] = 0;
+			m_max[i] = 0;
+		}
+	}
 
 	bbox(PointType min_, PointType max_)
 	: m_min(min_)
