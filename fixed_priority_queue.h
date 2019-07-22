@@ -29,7 +29,8 @@ public:
 
 	T const& top() const { return m_heap.front(); }
 
-	void push(T const& t)
+	// return true if a new element was inserted into the priority queue
+	bool push(T const& t)
 	{
 		if (size() == max_size())
 		{
@@ -38,13 +39,19 @@ public:
 			{
 				*min_element = t;
 				std::make_heap(m_heap.begin(), m_heap.end(), m_comp);
+
+				return true;
 			}
 		}
 		else
 		{
 			m_heap.push_back(t);
 			std::push_heap(m_heap.begin(), m_heap.end(), m_comp);
+
+			return true;
 		}
+
+		return false;
 	}
 
 	void pop()
