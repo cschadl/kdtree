@@ -194,15 +194,17 @@ public:
 			node_t* node = ns_entry.node;
 			bbox<PointType> const& node_bbox = ns_entry.node_bbox;
 
-			// prune this node if the point does not lie within the node bbox
-			if (!node_bbox.contains(p))
+			size_t const s = depth++ % Dim;
+
+			// prune this node if the search radius of the nearest point
+			// does not intersect the splitting hyperplane
+			value_type const dist_to_split_plane = std::abs(node->val[s] - p[s]);
+			if (knn_pq.top().dist < dist_to_split_plane)
 				continue;
 
 			// Get the distance from the p to this node
 			value_type const dist_this_node = distance(p, node->val);
 			knn_pq.push(knn_query{node->val, dist_this_node});
-
-			size_t const s = depth++ % Dim;
 
 			bbox<PointType> left_bbox, right_bbox;
 			node_bbox.split(s, node->val[s], left_bbox, right_bbox);

@@ -144,8 +144,9 @@ namespace tut
 		tree.build(points.begin(), points.end());
 
 		const size_t n_q_pts = 100;
-		const size_t n_neighbors = 1;
+		const size_t n_neighbors = 1;	// Fails if n_neighbors > 1
 
+		// FAILS with 0x38fab2d4ef482a42
 		std::mt19937_64 q_pt_generator(0xfeebdaedfeebdaed);
 		for (size_t i = 0 ; i < n_q_pts ; i++)
 		{
@@ -172,8 +173,8 @@ namespace tut
 				double const dist_q_nn_j = dist(q, nn_pts[j]);
 
 				ensure(
-					(boost::format("Point (%.4f, %.4f, %.4f) nn %d, Expected: (%.4f, %.4f, %.4f) (dist %.6f), got: (%.4f, %.4f, %.4f) (dist %.6f)") %
-							q[0] % q[1] % q[2] % j %
+					(boost::format("Point (%.4f, %.4f, %.4f) (i: %u) nn %d, Expected: (%.4f, %.4f, %.4f) (dist %.6f), got: (%.4f, %.4f, %.4f) (dist %.6f)") %
+							q[0] % q[1] % q[2] % i % j %
 							p_nq[0] % p_nq[1] % p_nq[2] % dist_q_p_nq %
 							nn_pts[j][0] % nn_pts[j][1] % nn_pts[j][2] % dist_q_nn_j).str(),
 					nn_pts[j] == p_nq || abs(dist_q_p_nq - dist_q_nn_j) < 1.0e-12);
