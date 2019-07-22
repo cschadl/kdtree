@@ -7,6 +7,7 @@
 #include <memory>
 #include <stack>
 #include <limits>
+#include <cmath>
 
 #include <bbox.h>
 #include <fixed_priority_queue.h>
