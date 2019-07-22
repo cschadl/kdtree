@@ -9,7 +9,7 @@
 #include <limits>
 
 #include <bbox.h>
-
+#include <fixed_priority_queue.h>
 
 template <typename PointType, size_t Dim = point_traits<PointType>::dim()>
 class kd_tree
@@ -28,6 +28,7 @@ private:
 	};
 
 	using node_t = node<PointType>;
+	using value_type = typename point_traits<PointType>::value_type;
 
 	std::unique_ptr<node_t>	m_root;
 	size_t 						m_q_nodes_visited;	// Nodes visited for last query (debugging)
@@ -61,7 +62,17 @@ private:
 		}
 	};
 
-	using value_type = typename point_traits<PointType>::value_type;
+	struct knn_query
+	{
+		PointType	point;
+		value_type	dist;
+
+		bool operator<(const knn_query& rhs) const
+		{
+			// Backwards, for min-priority queue
+			return dist > rhs.dist;
+		}
+	};
 
 	static typename point_traits<PointType>::value_type distance_sq(PointType const& pt1, PointType const& pt2)
 	{
@@ -134,19 +145,24 @@ public:
 		}
 	}
 
-	PointType nn(PointType const& p) const
+	std::vector<PointType> k_nn(PointType const& p, size_t k) const
 	{
 		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
 
-		value_type min_dist_sq = std::numeric_limits<value_type>::max();
+		constexpr value_type max_dist = std::numeric_limits<value_type>::max();
 
-		// Initialize min_pt to ( max, max, ..., max)
-		PointType min_pt;
+		fixed_priority_queue<knn_query> knn_pq(k);
+
+		// Initialize max_dist_pt to ( max, max, ..., max)
+		PointType max_dist_pt;
 		for (size_t i = 0 ; i < Dim ; i++)
-			min_pt[i] = min_dist_sq;
+			max_dist_pt[i] = max_dist;
+
+		for (size_t i = 0 ; i < k ; i++)
+			knn_pq.push(knn_query{max_dist_pt, max_dist});
 
 		if (!m_root)
-			return min_pt;
+			return { knn_pq.top().point };
 
 		constexpr auto max_val = std::numeric_limits<value_type>::max();
 		PointType root_min, root_max;
@@ -181,13 +197,9 @@ public:
 			if (!node_bbox.contains(p))
 				continue;
 
-			// Get the distance from the min_pt to this node
+			// Get the distance from the p to this node
 			value_type const dist_this_node = distance(p, node->val);
-			if (dist_this_node < min_dist_sq)
-			{
-				min_dist_sq = dist_this_node;
-				min_pt = node->val;
-			}
+			knn_pq.push(knn_query{node->val, dist_this_node});
 
 			size_t const s = depth++ % Dim;
 
@@ -206,7 +218,25 @@ public:
 			}
 		}
 
-		return min_pt;
+		std::vector<PointType> k_nn_pts(k, max_dist_pt);
+		size_t i = 0;
+
+		while (!knn_pq.empty())
+		{
+			knn_query const& pt_dist = knn_pq.top();
+			if (pt_dist.dist < max_val)
+				k_nn_pts[i++] = pt_dist.point;
+
+			knn_pq.pop();
+		}
+
+		return k_nn_pts;
+	}
+
+	PointType nn(PointType const& p) const
+	{
+		std::vector<PointType> nn_pt = k_nn(p, 1 /* k */);
+		return nn_pt.front();
 	}
 
 	size_t last_q_nodes_visited() const
