@@ -30,7 +30,7 @@ public:
 		stringstream result_ss;
 		if (tr.result != tut::test_result::ok)
 		{
-			result_ss << "FAILED";
+			result_ss << "FAILED: " << tr.message;
 			tests_failed++;
 		}
 		else

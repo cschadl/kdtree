@@ -22,6 +22,13 @@ public:
 
 	}
 
+	fixed_priority_queue(size_t max_size, C comp)
+		: m_max_size(max_size)
+		, m_comp(comp)
+	{
+
+	}
+
 	bool empty() const { return m_heap.empty(); }
 
 	size_t size() const { return m_heap.size(); }
