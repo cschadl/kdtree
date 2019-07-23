@@ -146,8 +146,7 @@ namespace tut
 		const size_t n_q_pts = 100;
 		const size_t n_neighbors = 1;	// Fails if n_neighbors > 1
 
-		// FAILS with 0x38fab2d4ef482a42
-		std::mt19937_64 q_pt_generator(0xfeebdaedfeebdaed);
+		std::mt19937_64 q_pt_generator(0x38fab2d4ef482a42);
 		for (size_t i = 0 ; i < n_q_pts ; i++)
 		{
 			point3d_t q = { rand_pt(q_pt_generator), rand_pt(q_pt_generator), rand_pt(q_pt_generator) };

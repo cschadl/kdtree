@@ -196,29 +196,20 @@ public:
 
 			size_t const s = depth++ % Dim;
 
-			// prune this node if the search radius of the nearest point
-			// does not intersect the splitting hyperplane
-			value_type const dist_to_split_plane = std::abs(node->val[s] - p[s]);
-			if (knn_pq.top().dist < dist_to_split_plane)
-				continue;
+			bbox<PointType> left_bbox, right_bbox;
+			node_bbox.split(s, node->val[s], left_bbox, right_bbox);
+
+			value_type const dist_left = node->left_child ? std::abs(p[s] - node->left_child->val[s]) : max_val;
+			value_type const dist_right = node->right_child ? std::abs(p[s] - node->right_child->val[s]) : max_val;
+
+			if (knn_pq.top().dist > dist_left)
+				node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
+			if (knn_pq.top().dist > dist_right)
+				node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
 
 			// Get the distance from the p to this node
 			value_type const dist_this_node = distance(p, node->val);
 			knn_pq.push(knn_query{node->val, dist_this_node});
-
-			bbox<PointType> left_bbox, right_bbox;
-			node_bbox.split(s, node->val[s], left_bbox, right_bbox);
-
-			if (p[s] < node->val[s])
-			{
-				node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
-				node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
-			}
-			else
-			{
-				node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
-				node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
-			}
 		}
 
 		std::vector<PointType> k_nn_pts(k, max_dist_pt);
