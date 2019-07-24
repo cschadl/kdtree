@@ -206,9 +206,9 @@ public:
 			value_type const dist_left = node->left_child ? std::abs(p[s] - node->left_child->val[s]) : max_val;
 			value_type const dist_right = node->right_child ? std::abs(p[s] - node->right_child->val[s]) : max_val;
 
-			if (dist_this_node > dist_left)
+			if (dist_this_node > dist_left || left_bbox.contains(p))
 				node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
-			if (dist_this_node > dist_right)
+			if (dist_this_node > dist_right || right_bbox.contains(p))
 				node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
 		}
 

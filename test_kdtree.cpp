@@ -144,10 +144,12 @@ namespace tut
 		tree.build(points.begin(), points.end());
 
 		const size_t n_q_pts = 100;
-		const size_t n_neighbors = 5;	// Fails if n_neighbors > 1
+		const size_t n_neighbors = 10;	// Fails if n_neighbors > 1
 
 		//0xf3bd3f842d4fab01
-		std::mt19937_64 q_pt_generator(0xf3bd3f842d4fab01);
+		//0xe847ab01d3f48a49
+		//0xdeadbeefdeadbeef
+		std::mt19937_64 q_pt_generator(0xd5ba7284eef00fee);
 		for (size_t i = 0 ; i < n_q_pts ; i++)
 		{
 			point3d_t q = { rand_pt(q_pt_generator), rand_pt(q_pt_generator), rand_pt(q_pt_generator) };
