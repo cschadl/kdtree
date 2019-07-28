@@ -210,17 +210,17 @@ public:
 
 			if (p[s] < node->val[s])
 			{
-				if (overlaps_l)
-					node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
 				if (overlaps_r)
 					node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
+				if (overlaps_l)
+					node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
 			}
 			else
 			{
-				if (overlaps_r)
-					node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
 				if (overlaps_l)
 					node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
+				if (overlaps_r)
+					node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
 			}
 		}
 
