@@ -103,6 +103,9 @@ namespace tut
 			});
 
 		ensure(nn_kdtree == nn_actual);
+
+		std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
+
 		ensure(tree.last_q_nodes_visited() < n_pts);
 	}
 
@@ -135,7 +138,7 @@ namespace tut
 		std::vector<point3d_t> points(n_pts);
 
 		std::mt19937_64 pt_generator(0xfeebdaedfeebdaed);
-		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);
+		std::uniform_real_distribution<double> rand_pt(-10.0, 10.0);
 
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
@@ -146,44 +149,58 @@ namespace tut
 		const size_t n_q_pts = 100;
 		const size_t n_neighbors = 10;	// Fails if n_neighbors > 1
 
-		//0xf3bd3f842d4fab01
-		//0xe847ab01d3f48a49
-		//0xdeadbeefdeadbeef
-		std::mt19937_64 q_pt_generator(0xd5ba7284eef00fee);
-		for (size_t i = 0 ; i < n_q_pts ; i++)
+		std::vector<size_t> seeds = {
+			0xf3bd3f842d4fab01,
+			0xe847ab01d3f48a49,
+			0xdeadbeefdeadbeef,
+			0xd5ba7284eef00fee
+		};
+
+		size_t total_nodes_visited = 0;
+
+		for (size_t seed : seeds)
 		{
-			point3d_t q = { rand_pt(q_pt_generator), rand_pt(q_pt_generator), rand_pt(q_pt_generator) };
-
-			std::vector<point3d_t> nn_pts = tree.k_nn(q, n_neighbors);
-
-			auto cmp_dist_q = [&q](point3d_t const& p1, point3d_t const& p2)
+			std::mt19937_64 q_pt_generator(seed);
+			for (size_t i = 0 ; i < n_q_pts ; i++)
 			{
-				return dist(p1, q) > dist(p2, q);	// min priority queue, so reversed
-			};
+				point3d_t q = { rand_pt(q_pt_generator), rand_pt(q_pt_generator), rand_pt(q_pt_generator) };
 
-			fixed_priority_queue<point3d_t, decltype(cmp_dist_q)> nn_min_pq(n_neighbors, cmp_dist_q);
-			for (point3d_t const& p : points)
-				nn_min_pq.push(p);
+				std::vector<point3d_t> nn_pts = tree.k_nn(q, n_neighbors);
+				std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
 
-			size_t j = 0;
-			while (!nn_min_pq.empty())
-			{
-				point3d_t const p_nq = nn_min_pq.top();
-				nn_min_pq.pop();
+				total_nodes_visited += tree.last_q_nodes_visited();
 
-				double const dist_q_p_nq = dist(q, p_nq);
-				double const dist_q_nn_j = dist(q, nn_pts[j]);
+				auto cmp_dist_q = [&q](point3d_t const& p1, point3d_t const& p2)
+				{
+					return dist(p1, q) > dist(p2, q);	// min priority queue, so reversed
+				};
 
-				ensure(
-					(boost::format("Point (%.4f, %.4f, %.4f) (i: %u) nn %d, Expected: (%.4f, %.4f, %.4f) (dist %.6f), got: (%.4f, %.4f, %.4f) (dist %.6f)") %
-							q[0] % q[1] % q[2] % i % j %
-							p_nq[0] % p_nq[1] % p_nq[2] % dist_q_p_nq %
-							nn_pts[j][0] % nn_pts[j][1] % nn_pts[j][2] % dist_q_nn_j).str(),
-					nn_pts[j] == p_nq || abs(dist_q_p_nq - dist_q_nn_j) < 1.0e-12);
+				fixed_priority_queue<point3d_t, decltype(cmp_dist_q)> nn_min_pq(n_neighbors, cmp_dist_q);
+				for (point3d_t const& p : points)
+					nn_min_pq.push(p);
 
-				j++;
+				size_t j = 0;
+				while (!nn_min_pq.empty())
+				{
+					point3d_t const p_nq = nn_min_pq.top();
+					nn_min_pq.pop();
+
+					double const dist_q_p_nq = dist(q, p_nq);
+					double const dist_q_nn_j = dist(q, nn_pts[j]);
+
+					ensure(
+						(boost::format("Point (%.4f, %.4f, %.4f) (i: %u) nn %d, Expected: (%.4f, %.4f, %.4f) (dist %.6f), got: (%.4f, %.4f, %.4f) (dist %.6f)") %
+								q[0] % q[1] % q[2] % i % j %
+								p_nq[0] % p_nq[1] % p_nq[2] % dist_q_p_nq %
+								nn_pts[j][0] % nn_pts[j][1] % nn_pts[j][2] % dist_q_nn_j).str(),
+						nn_pts[j] == p_nq || abs(dist_q_p_nq - dist_q_nn_j) < 1.0e-12);
+
+					j++;
+				}
 			}
 		}
+
+		std::cout << "Avg nodes visited: " << total_nodes_visited / (seeds.size() * n_q_pts) << std::endl;
 	}
 };
 
