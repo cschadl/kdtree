@@ -203,21 +203,23 @@ public:
 			value_type const dist_this_node = distance(p, node->val);
 			knn_pq.push(knn_query{node->val, dist_this_node});
 
-			value_type const dist_left = node->left_child ? std::abs(p[s] - node->left_child->val[s]) : max_val;
-			value_type const dist_right = node->right_child ? std::abs(p[s] - node->right_child->val[s]) : max_val;
+			value_type const search_r = knn_pq.top().dist;
+
+			bool const overlaps_l = p[s] - search_r <= node->val[s];
+			bool const overlaps_r = p[s] + search_r >  node->val[s];
 
 			if (p[s] < node->val[s])
 			{
-				if (dist_this_node > dist_left || left_bbox.contains(p))
+				if (overlaps_l)
 					node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
-				if (dist_this_node > dist_right || right_bbox.contains(p))
+				if (overlaps_r)
 					node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
 			}
 			else
 			{
-				if (dist_this_node > dist_right || right_bbox.contains(p))
+				if (overlaps_r)
 					node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
-				if (dist_this_node > dist_left || left_bbox.contains(p))
+				if (overlaps_l)
 					node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
 			}
 		}
