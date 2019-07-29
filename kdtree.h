@@ -204,9 +204,10 @@ public:
 			knn_pq.push(knn_query{node->val, dist_this_node});
 
 			value_type const search_r = knn_pq.top().dist;
+			value_type const dist_to_plane = p[s] - node->val[s];
 
-			bool const overlaps_l = p[s] - search_r <= node->val[s];
-			bool const overlaps_r = p[s] + search_r >  node->val[s];
+			bool const overlaps_l = dist_to_plane <= search_r;
+			bool const overlaps_r = dist_to_plane > -search_r;
 
 			if (p[s] < node->val[s])
 			{

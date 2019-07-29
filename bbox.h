@@ -3,6 +3,7 @@
 #include <point_traits.h>
 
 #include <limits>
+#include <cmath>
 //#include <initializer_list>
 
 // this stuff might work with C++17 for compile-time for... loops on Dim

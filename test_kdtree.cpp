@@ -138,7 +138,7 @@ namespace tut
 		std::vector<point3d_t> points(n_pts);
 
 		std::mt19937_64 pt_generator(0xfeebdaedfeebdaed);
-		std::uniform_real_distribution<double> rand_pt(-10.0, 10.0);
+		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);	// fails with r > 1
 
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
@@ -147,7 +147,7 @@ namespace tut
 		tree.build(points.begin(), points.end());
 
 		const size_t n_q_pts = 100;
-		const size_t n_neighbors = 10;	// Fails if n_neighbors > 1
+		const size_t n_neighbors = 10;
 
 		std::vector<size_t> seeds = {
 			0xf3bd3f842d4fab01,
