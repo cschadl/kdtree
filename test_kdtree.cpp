@@ -85,7 +85,7 @@ namespace tut
 
 		size_t const random_seed = 0xdeadbeefdeadbeef;
 		std::mt19937_64 pt_generator(random_seed);
-		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);
+		std::uniform_real_distribution<double> rand_pt(-10.0, 10.0);
 
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
@@ -134,7 +134,7 @@ namespace tut
 	{
 		set_test_name("knn search (3d)");
 
-		const size_t n_pts = 25;
+		const size_t n_pts = 1000000;
 		std::vector<point3d_t> points(n_pts);
 
 		std::mt19937_64 pt_generator(0xfeebdaedfeebdaed);
@@ -189,8 +189,8 @@ namespace tut
 					double const dist_q_nn_j = dist(q, nn_pts[j]);
 
 					ensure(
-						(boost::format("Point (%.4f, %.4f, %.4f) (i: %u) nn %d, Expected: (%.4f, %.4f, %.4f) (dist %.6f), got: (%.4f, %.4f, %.4f) (dist %.6f)") %
-								q[0] % q[1] % q[2] % i % j %
+						(boost::format("Point (%.4f, %.4f, %.4f) (seed: %02X, i: %u) nn %d, Expected: (%.4f, %.4f, %.4f) (dist %.6f), got: (%.4f, %.4f, %.4f) (dist %.6f)") %
+								q[0] % q[1] % q[2] % seed % i % j %
 								p_nq[0] % p_nq[1] % p_nq[2] % dist_q_p_nq %
 								nn_pts[j][0] % nn_pts[j][1] % nn_pts[j][2] % dist_q_nn_j).str(),
 						nn_pts[j] == p_nq || abs(dist_q_p_nq - dist_q_nn_j) < 1.0e-12);
