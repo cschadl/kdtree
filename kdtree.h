@@ -26,6 +26,21 @@ private:
 
 		std::unique_ptr< node<PointType_> >	left_child;
 		std::unique_ptr< node<PointType_> >	right_child;
+
+		node(size_t dim, PointType val, std::unique_ptr< node<PointType_> > left, std::unique_ptr< node<PointType_> > right)
+		: n_dim(dim)
+		, val(std::move(val))
+		, left_child(std::move(left))
+		, right_child(std::move(right))
+		{
+
+		}
+
+		node()
+		: n_dim(0)
+		{
+
+		}
 	};
 
 	using node_t = node<PointType>;
@@ -89,8 +104,39 @@ public:
 	}
 
 	template <typename InputIterator>
+	std::unique_ptr<node_t> build_recursive_(InputIterator begin, InputIterator end, size_t dim)
+	{
+		size_t const n_nodes = std::distance(begin, end);
+		if (n_nodes == 0)
+			return nullptr;
+
+		std::nth_element(begin, begin + n_nodes / 2, end,
+			[dim](auto pt1, auto pt2)
+			{
+				return pt1[dim] < pt2[dim];
+			});
+
+		InputIterator median = begin + n_nodes / 2;
+
+		size_t dim_n = (dim + 1) % Dim;
+
+		return std::make_unique<node_t>(
+				dim,
+				*median,
+				build_recursive_(begin, median, dim_n),
+				build_recursive_(std::next(median), end, dim_n));
+	}
+
+	template <typename InputIterator>
+	void build_recursive(InputIterator begin, InputIterator end)
+	{
+		m_root = build_recursive_(begin, end, 0);
+	}
+
+	template <typename InputIterator>
 	void build(InputIterator begin, InputIterator end)
 	{
+#if 1
 		using ns_entry_t = node_stack_entry<InputIterator>;
 
 		m_root = std::make_unique<node_t>();
@@ -108,8 +154,8 @@ public:
 
 			size_t const n_elements = std::distance(entry.begin, entry.end);
 
-			//std::nth_element(entry.begin, entry.begin + n_elements / 2, entry.end,
-			std::sort(entry.begin, entry.end,
+			std::nth_element(entry.begin, entry.begin + n_elements / 2, entry.end,
+			//std::sort(entry.begin, entry.end,
 				[dim](auto pt1, auto pt2)
 				{
 					return pt1[dim] < pt2[dim];
@@ -135,6 +181,9 @@ public:
 				node_stack.emplace(node->right_child.get(), median_1, entry.end, dim_n);
 			}
 		}
+#else
+		build_recursive(begin, end);
+#endif
 	}
 
 	void k_nn_recursive_(PointType const& p, size_t const k, node_t* node, fixed_priority_queue<knn_query>& knn_pq) const

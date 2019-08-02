@@ -134,7 +134,7 @@ namespace tut
 	{
 		set_test_name("knn search (3d)");
 
-		const size_t n_pts = 1000;
+		const size_t n_pts = 1000000;
 		std::vector<point3d_t> points(n_pts);
 
 		std::mt19937_64 pt_generator(0xfeebdaedfeebdaed);
@@ -146,8 +146,8 @@ namespace tut
 		kd_tree<point3d_t> tree;
 		tree.build(points.begin(), points.end());
 
-		const size_t n_q_pts = 10000;
-		const size_t n_neighbors = 10;
+		const size_t n_q_pts = 100;
+		const size_t n_neighbors = 1;
 
 		std::vector<size_t> seeds = {
 			0xf3bd3f842d4fab01,
