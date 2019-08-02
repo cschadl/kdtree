@@ -155,7 +155,6 @@ public:
 			size_t const n_elements = std::distance(entry.begin, entry.end);
 
 			std::nth_element(entry.begin, entry.begin + n_elements / 2, entry.end,
-			//std::sort(entry.begin, entry.end,
 				[dim](auto pt1, auto pt2)
 				{
 					return pt1[dim] < pt2[dim];
@@ -227,23 +226,13 @@ public:
 		fixed_priority_queue<knn_query> knn_pq(k);
 
 		// Initialize max_dist_pt to ( max, max, ..., max)
-		PointType max_dist_pt;
-		for (size_t i = 0 ; i < Dim ; i++)
-			max_dist_pt[i] = max_dist;
+		PointType max_dist_pt = point_traits<PointType>::create(max_dist);
 
 		for (size_t i = 0 ; i < k ; i++)
 			knn_pq.push(knn_query{max_dist_pt, max_dist});
 
 		if (!m_root)
 			return { knn_pq.top().point };
-
-		constexpr auto max_val = std::numeric_limits<value_type>::max();
-		PointType root_min, root_max;
-		for (size_t i = 0 ; i < Dim ; i++)
-		{
-			root_min[i] = -max_val;
-			root_max[i] =  max_val;
-		}
 
 		k_nn_recursive_(p, k, m_root.get(), knn_pq);
 
@@ -253,7 +242,7 @@ public:
 		while (!knn_pq.empty())
 		{
 			knn_query const& pt_dist = knn_pq.top();
-			if (pt_dist.dist < max_val)
+			if (pt_dist.dist < max_dist)
 				k_nn_pts[i++] = pt_dist.point;
 
 			knn_pq.pop();
@@ -277,23 +266,13 @@ public:
 		fixed_priority_queue<knn_query> knn_pq(k);
 
 		// Initialize max_dist_pt to ( max, max, ..., max)
-		PointType max_dist_pt;
-		for (size_t i = 0 ; i < Dim ; i++)
-			max_dist_pt[i] = max_dist;
+		PointType max_dist_pt = point_traits<PointType>::create(max_dist);
 
 		for (size_t i = 0 ; i < k ; i++)
 			knn_pq.push(knn_query{max_dist_pt, max_dist});
 
 		if (!m_root)
 			return { knn_pq.top().point };
-
-		constexpr auto max_val = std::numeric_limits<value_type>::max();
-		PointType root_min, root_max;
-		for (size_t i = 0 ; i < Dim ; i++)
-		{
-			root_min[i] = -max_val;
-			root_max[i] =  max_val;
-		}
 
 		std::stack<node_t*> node_stack;
 		node_stack.emplace(m_root.get());
@@ -341,7 +320,7 @@ public:
 		while (!knn_pq.empty())
 		{
 			knn_query const& pt_dist = knn_pq.top();
-			if (pt_dist.dist < max_val)
+			if (pt_dist.dist < max_dist)
 				k_nn_pts[i++] = pt_dist.point;
 
 			knn_pq.pop();

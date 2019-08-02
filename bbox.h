@@ -34,12 +34,10 @@ private:
 
 public:
 	bbox()
+		: m_min(point_traits<PointType>::create(value_type(0)))
+		, m_max(point_traits<PointType>::create(value_type(0)))
 	{
-		for (size_t i = 0 ; i < Dim ; i++)
-		{
-			m_min[i] = 0;
-			m_max[i] = 0;
-		}
+
 	}
 
 	bbox(PointType min_, PointType max_)
