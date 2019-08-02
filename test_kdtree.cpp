@@ -85,7 +85,7 @@ namespace tut
 
 		size_t const random_seed = 0xdeadbeefdeadbeef;
 		std::mt19937_64 pt_generator(random_seed);
-		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);
+		std::uniform_real_distribution<double> rand_pt(-10.0, 10.0);
 
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
@@ -123,7 +123,7 @@ namespace tut
 		kd_tree<point2d_t> tree;
 		tree.build(points.begin(), points.end());
 
-		auto knn_3 = tree.k_nn(q, 3);
+		auto knn_3 = tree.k_nn_recursive(q, 3);
 		ensure(knn_3[0] == point2d_t{ 2, 3 });
 		ensure(knn_3[1] == point2d_t{ 5, 4 });
 		ensure(knn_3[2] == point2d_t{ 7, 2 });
@@ -138,7 +138,7 @@ namespace tut
 		std::vector<point3d_t> points(n_pts);
 
 		std::mt19937_64 pt_generator(0xfeebdaedfeebdaed);
-		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);	// fails with r > 1
+		std::uniform_real_distribution<double> rand_pt(-10.0, 10.0);	// fails with r > 1
 
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
@@ -165,7 +165,7 @@ namespace tut
 			{
 				point3d_t q = { rand_pt(q_pt_generator), rand_pt(q_pt_generator), rand_pt(q_pt_generator) };
 
-				std::vector<point3d_t> nn_pts = tree.k_nn(q, n_neighbors);
+				std::vector<point3d_t> nn_pts = tree.k_nn_recursive(q, n_neighbors);
 				std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
 
 				total_nodes_visited += tree.last_q_nodes_visited();

@@ -9,7 +9,7 @@
 #include <limits>
 #include <cmath>
 
-#include <bbox.h>
+#include <point_traits.h>
 #include <fixed_priority_queue.h>
 
 template <typename PointType, size_t Dim = point_traits<PointType>::dim()>
@@ -45,19 +45,6 @@ private:
 			: node(node_)
 			, begin(begin_)
 			, end(end_)
-		{
-
-		}
-	};
-
-	struct query_stack_entry
-	{
-		node_t*				node;
-		bbox<PointType>	node_bbox;
-
-		query_stack_entry(node_t* node_, bbox<PointType> bbox_)
-		: node(node_)
-		, node_bbox(std::move(bbox_))
 		{
 
 		}
@@ -121,7 +108,8 @@ public:
 			size_t const dim = depth++ % Dim;
 			size_t const n_elements = std::distance(entry.begin, entry.end);
 
-			std::nth_element(entry.begin, entry.begin + n_elements / 2, entry.end,
+			//std::nth_element(entry.begin, entry.begin + n_elements / 2, entry.end,
+			std::sort(entry.begin, entry.end,
 				[dim](auto pt1, auto pt2)
 				{
 					return pt1[dim] < pt2[dim];
@@ -144,6 +132,82 @@ public:
 				node_stack.emplace(node->right_child.get(), median_1, entry.end);
 			}
 		}
+	}
+
+	void k_nn_recursive_(PointType const& p, size_t const k, node_t* node, size_t s, fixed_priority_queue<knn_query>& knn_pq) const
+	{
+		if (!node)
+			return;
+
+		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
+
+		// Get the distance from the p to this node
+		value_type const dist_this_node = distance(p, node->val);
+		knn_pq.push(knn_query{node->val, dist_this_node});
+
+		value_type const dist_to_plane = p[s] - node->val[s];
+
+		s = (s + 1) % Dim;
+
+		if (dist_to_plane <= 0)
+		{
+			// Traverse left, then right if the search sphere crosses the split plane
+			k_nn_recursive_(p, k, node->left_child.get(), s, knn_pq);
+
+			if (std::abs(dist_to_plane) < knn_pq.top().dist)
+				k_nn_recursive_(p, k, node->right_child.get(), s, knn_pq);
+		}
+		else
+		{
+			k_nn_recursive_(p, k, node->right_child.get(), s, knn_pq);
+
+			if (std::abs(dist_to_plane) < knn_pq.top().dist)
+				k_nn_recursive_(p, k, node->left_child.get(), s, knn_pq);
+		}
+	}
+
+	std::vector<PointType> k_nn_recursive(PointType const& p, size_t k) const
+	{
+		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
+
+		constexpr value_type max_dist = std::numeric_limits<value_type>::max();
+
+		fixed_priority_queue<knn_query> knn_pq(k);
+
+		// Initialize max_dist_pt to ( max, max, ..., max)
+		PointType max_dist_pt;
+		for (size_t i = 0 ; i < Dim ; i++)
+			max_dist_pt[i] = max_dist;
+
+		for (size_t i = 0 ; i < k ; i++)
+			knn_pq.push(knn_query{max_dist_pt, max_dist});
+
+		if (!m_root)
+			return { knn_pq.top().point };
+
+		constexpr auto max_val = std::numeric_limits<value_type>::max();
+		PointType root_min, root_max;
+		for (size_t i = 0 ; i < Dim ; i++)
+		{
+			root_min[i] = -max_val;
+			root_max[i] =  max_val;
+		}
+
+		k_nn_recursive_(p, k, m_root.get(), 0, knn_pq);
+
+		std::vector<PointType> k_nn_pts(k, max_dist_pt);
+		size_t i = 0;
+
+		while (!knn_pq.empty())
+		{
+			knn_query const& pt_dist = knn_pq.top();
+			if (pt_dist.dist < max_val)
+				k_nn_pts[i++] = pt_dist.point;
+
+			knn_pq.pop();
+		}
+
+		return k_nn_pts;
 	}
 
 	std::vector<PointType> k_nn(PointType const& p, size_t k) const
@@ -173,8 +237,8 @@ public:
 			root_max[i] =  max_val;
 		}
 
-		std::stack<query_stack_entry> node_stack;
-		node_stack.emplace(query_stack_entry{m_root.get(), bbox<PointType>(root_min, root_max)});
+		std::stack<node_t*> node_stack;
+		node_stack.emplace(m_root.get());
 
 		size_t depth = 0;
 
@@ -183,45 +247,35 @@ public:
 
 		while (!node_stack.empty())
 		{
-			auto ns_entry = node_stack.top();
+			auto node = node_stack.top();
 			node_stack.pop();
 
-			if (!ns_entry.node)
+			if (!node)
 				continue;
 
 			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
 
-			node_t* node = ns_entry.node;
-			bbox<PointType> const& node_bbox = ns_entry.node_bbox;
-
 			size_t const s = depth++ % Dim;
-
-			bbox<PointType> left_bbox, right_bbox;
-			node_bbox.split(s, node->val[s], left_bbox, right_bbox);
 
 			// Get the distance from the p to this node
 			value_type const dist_this_node = distance(p, node->val);
 			knn_pq.push(knn_query{node->val, dist_this_node});
 
-			value_type const search_r = knn_pq.top().dist;
-			value_type const dist_to_plane = p[s] - node->val[s];
+			value_type const dist_to_plane = node->val[s] - p[s];
 
-			bool const overlaps_l = dist_to_plane <= search_r;
-			bool const overlaps_r = dist_to_plane > -search_r;
-
-			if (p[s] < node->val[s])
+			if (dist_to_plane <= 0)
 			{
-				if (overlaps_r)
-					node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
-				if (overlaps_l)
-					node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
+				if (std::abs(dist_to_plane) < knn_pq.top().dist)
+					node_stack.emplace((node->right_child).get());
+
+				node_stack.emplace((node->left_child).get());
 			}
 			else
 			{
-				if (overlaps_l)
-					node_stack.emplace(query_stack_entry{(node->left_child).get(), left_bbox});
-				if (overlaps_r)
-					node_stack.emplace(query_stack_entry{(node->right_child).get(), right_bbox});
+				if (std::abs(dist_to_plane) < knn_pq.top().dist)
+					node_stack.emplace((node->left_child).get());
+
+				node_stack.emplace((node->right_child).get());
 			}
 		}
 
@@ -242,7 +296,7 @@ public:
 
 	PointType nn(PointType const& p) const
 	{
-		std::vector<PointType> nn_pt = k_nn(p, 1 /* k */);
+		std::vector<PointType> nn_pt = k_nn_recursive(p, 1 /* k */);
 		return nn_pt.front();
 	}
 
