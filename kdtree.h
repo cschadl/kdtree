@@ -264,6 +264,8 @@ public:
 
 	std::vector<PointType> k_nn(PointType const& p, size_t k) const
 	{
+		// This needs some work...
+#if 1
 		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
 
 		constexpr value_type max_dist = std::numeric_limits<value_type>::max();
@@ -292,8 +294,6 @@ public:
 		std::stack<node_t*> node_stack;
 		node_stack.emplace(m_root.get());
 
-		size_t depth = 0;
-
 		// To search, we explore the tree, pruning nodes that are
 		// too far away from the search point.
 
@@ -307,24 +307,24 @@ public:
 
 			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
 
-			size_t const s = depth++ % Dim;
+			size_t const s = node->n_dim;
 
 			// Get the distance from the p to this node
 			value_type const dist_this_node = distance(p, node->val);
 			knn_pq.push(knn_query{node->val, dist_this_node});
 
-			value_type const dist_to_plane = node->val[s] - p[s];
+			value_type const dist_to_plane = p[s] - node->val[s];
 
 			if (dist_to_plane <= 0)
 			{
-				if (std::abs(dist_to_plane) < knn_pq.top().dist)
+				if (std::abs(dist_to_plane) < knn_pq.bottom().dist)
 					node_stack.emplace((node->right_child).get());
 
 				node_stack.emplace((node->left_child).get());
 			}
 			else
 			{
-				if (std::abs(dist_to_plane) < knn_pq.top().dist)
+				if (std::abs(dist_to_plane) < knn_pq.bottom().dist)
 					node_stack.emplace((node->left_child).get());
 
 				node_stack.emplace((node->right_child).get());
@@ -344,6 +344,9 @@ public:
 		}
 
 		return k_nn_pts;
+#else
+		return k_nn_recursive(p, k);
+#endif
 	}
 
 	PointType nn(PointType const& p) const

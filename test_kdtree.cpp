@@ -123,7 +123,7 @@ namespace tut
 		kd_tree<point2d_t> tree;
 		tree.build(points.begin(), points.end());
 
-		auto knn_3 = tree.k_nn_recursive(q, 3);
+		auto knn_3 = tree.k_nn(q, 3);
 		ensure(knn_3[0] == point2d_t{ 2, 3 });
 		ensure(knn_3[1] == point2d_t{ 5, 4 });
 		ensure(knn_3[2] == point2d_t{ 7, 2 });
@@ -147,7 +147,7 @@ namespace tut
 		tree.build(points.begin(), points.end());
 
 		const size_t n_q_pts = 100;
-		const size_t n_neighbors = 10;
+		const size_t n_neighbors = 5;
 
 		std::vector<size_t> seeds = {
 			0xf3bd3f842d4fab01,
@@ -165,7 +165,7 @@ namespace tut
 			{
 				point3d_t q = { rand_pt(q_pt_generator), rand_pt(q_pt_generator), rand_pt(q_pt_generator) };
 
-				std::vector<point3d_t> nn_pts = tree.k_nn_recursive(q, n_neighbors);
+				std::vector<point3d_t> nn_pts = tree.k_nn(q, n_neighbors);
 				std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
 
 				total_nodes_visited += tree.last_q_nodes_visited();
