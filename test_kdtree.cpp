@@ -147,7 +147,7 @@ namespace tut
 		tree.build(points.begin(), points.end());
 
 		const size_t n_q_pts = 100;
-		const size_t n_neighbors = 1;
+		const size_t n_neighbors = 10;
 
 		std::vector<size_t> seeds = {
 			0xf3bd3f842d4fab01,

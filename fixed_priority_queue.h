@@ -36,6 +36,8 @@ public:
 
 	T const& top() const { return m_heap.front(); }
 
+	T const& bottom() const { return *std::min_element(m_heap.begin(), m_heap.end(), m_comp); }
+
 	// return true if a new element was inserted into the priority queue
 	bool push(T const& t)
 	{

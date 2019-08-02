@@ -206,14 +206,14 @@ public:
 			// Traverse left, then right if the search sphere crosses the split plane
 			k_nn_recursive_(p, k, node->left_child.get(), knn_pq);
 
-			if (std::abs(dist_to_plane) < knn_pq.top().dist)
+			if (std::abs(dist_to_plane) < knn_pq.bottom().dist)
 				k_nn_recursive_(p, k, node->right_child.get(), knn_pq);
 		}
 		else
 		{
 			k_nn_recursive_(p, k, node->right_child.get(), knn_pq);
 
-			if (std::abs(dist_to_plane) < knn_pq.top().dist)
+			if (std::abs(dist_to_plane) < knn_pq.bottom().dist)
 				k_nn_recursive_(p, k, node->left_child.get(), knn_pq);
 		}
 	}
