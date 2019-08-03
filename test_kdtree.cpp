@@ -104,9 +104,9 @@ namespace tut
 
 		ensure(nn_kdtree == nn_actual);
 
-		std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
+		//std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
 
-		ensure(tree.last_q_nodes_visited() < n_pts);
+		ensure(tree.last_q_nodes_visited() < n_pts / 3);
 	}
 
 	template <> template <>
@@ -134,7 +134,7 @@ namespace tut
 	{
 		set_test_name("knn search (3d)");
 
-		const size_t n_pts = 1000000;
+		const size_t n_pts = 1000;
 		std::vector<point3d_t> points(n_pts);
 
 		std::mt19937_64 pt_generator(0xfeebdaedfeebdaed);
@@ -166,7 +166,7 @@ namespace tut
 				point3d_t q = { rand_pt(q_pt_generator), rand_pt(q_pt_generator), rand_pt(q_pt_generator) };
 
 				std::vector<point3d_t> nn_pts = tree.k_nn(q, n_neighbors);
-				std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
+				//std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
 
 				total_nodes_visited += tree.last_q_nodes_visited();
 
