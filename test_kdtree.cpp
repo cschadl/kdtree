@@ -32,9 +32,44 @@ namespace tut
 
 			return std::sqrt(dist_sq);
 		}
+
+		static void test_knn(point3d_t const& q,
+									std::vector<point3d_t> const& points,
+									size_t n_neighbors,
+									std::vector<point3d_t> const& nn_pts,
+									size_t i, size_t seed)
+		{
+			auto cmp_dist_q = [&q](point3d_t const& p1, point3d_t const& p2)
+			{
+				return dist(p1, q) > dist(p2, q);	// min priority queue, so reversed
+			};
+
+			fixed_priority_queue<point3d_t, decltype(cmp_dist_q)> nn_min_pq(n_neighbors, cmp_dist_q);
+			for (point3d_t const& p : points)
+				nn_min_pq.push(p);
+
+			size_t j = 0;
+			while (!nn_min_pq.empty())
+			{
+				point3d_t const p_nq = nn_min_pq.top();
+				nn_min_pq.pop();
+
+				double const dist_q_p_nq = dist(q, p_nq);
+				double const dist_q_nn_j = dist(q, nn_pts[j]);
+
+				ensure(
+					(boost::format("Point (%.4f, %.4f, %.4f) (i: %u) nn %d, Expected: (%.4f, %.4f, %.4f) (dist %.6f), got: (%.4f, %.4f, %.4f) (dist %.6f)") %
+							q[0] % q[1] % q[2] % i % j %
+							p_nq[0] % p_nq[1] % p_nq[2] % dist_q_p_nq %
+							nn_pts[j][0] % nn_pts[j][1] % nn_pts[j][2] % dist_q_nn_j).str(),
+					nn_pts[j] == p_nq || abs(dist_q_p_nq - dist_q_nn_j) < 1.0e-12);
+
+				j++;
+			}
+		}
 	};
 
-	using kdtree_test_t = test_group<kdtree_test_data, 5>;
+	using kdtree_test_t = test_group<kdtree_test_data>;
 	kdtree_test_t kdtree_test("kd_tree tests");
 
 	template <> template <>
@@ -138,7 +173,7 @@ namespace tut
 		std::vector<point3d_t> points(n_pts);
 
 		std::mt19937_64 pt_generator(0xfeebdaedfeebdaed);
-		std::uniform_real_distribution<double> rand_pt(-10.0, 10.0);	// fails with r > 1
+		std::uniform_real_distribution<double> rand_pt(-10.0, 10.0);
 
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
@@ -170,39 +205,93 @@ namespace tut
 
 				total_nodes_visited += tree.last_q_nodes_visited();
 
-				auto cmp_dist_q = [&q](point3d_t const& p1, point3d_t const& p2)
-				{
-					return dist(p1, q) > dist(p2, q);	// min priority queue, so reversed
-				};
-
-				fixed_priority_queue<point3d_t, decltype(cmp_dist_q)> nn_min_pq(n_neighbors, cmp_dist_q);
-				for (point3d_t const& p : points)
-					nn_min_pq.push(p);
-
-				size_t j = 0;
-				while (!nn_min_pq.empty())
-				{
-					point3d_t const p_nq = nn_min_pq.top();
-					nn_min_pq.pop();
-
-					double const dist_q_p_nq = dist(q, p_nq);
-					double const dist_q_nn_j = dist(q, nn_pts[j]);
-
-					ensure(
-						(boost::format("Point (%.4f, %.4f, %.4f) (seed: %02X, i: %u) nn %d, Expected: (%.4f, %.4f, %.4f) (dist %.6f), got: (%.4f, %.4f, %.4f) (dist %.6f)") %
-								q[0] % q[1] % q[2] % seed % i % j %
-								p_nq[0] % p_nq[1] % p_nq[2] % dist_q_p_nq %
-								nn_pts[j][0] % nn_pts[j][1] % nn_pts[j][2] % dist_q_nn_j).str(),
-						nn_pts[j] == p_nq || abs(dist_q_p_nq - dist_q_nn_j) < 1.0e-12);
-
-					j++;
-				}
+				test_knn(q, points, n_neighbors, nn_pts, i, seed);
 			}
 		}
 
 		std::cout << "Avg nodes visited: " << total_nodes_visited / (seeds.size() * n_q_pts) << std::endl;
 	}
+
+	template <> template <>
+	void kdtree_test_t::object::test<6>()
+	{
+		set_test_name("duplicate points");
+
+		const size_t n_pts = 100;
+		const size_t n_duplicates = 15;
+
+		std::vector<point3d_t> points(n_pts + n_duplicates);
+
+		std::mt19937_64 pt_generator(0xdeaf3ba3de950afb);
+		std::uniform_real_distribution<double> rand_pt(-10.0, 10.0);
+
+		for (size_t i = 0 ; i < n_pts ; i++)
+			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
+
+		// Just use the 1st n_duplicates as our duplicates
+		for (size_t i = 0 ; i < n_duplicates ; i++)
+			points[n_pts + i] = points[i];
+
+		// Shuffle, for the hell of it
+		auto points_shuffled = points;
+		std::mt19937_64 shuffle_gen(0xdeadbeefdeadbeef);
+		std::shuffle(points_shuffled.begin(), points_shuffled.end(), shuffle_gen);
+
+		// Build the tree
+		kd_tree<point3d_t> tree;
+		tree.build(points_shuffled.begin(), points_shuffled.end());
+
+		// Make sure we can query it
+		size_t n_q_pts = 20;
+		size_t n_neighbors = 5;
+		for (size_t i = 0 ; i < n_q_pts ; i++)
+		{
+			point3d_t q = { rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
+
+			std::vector<point3d_t> nn_pts = tree.k_nn(q, n_neighbors);
+			test_knn(q, points, n_neighbors, nn_pts, i, 0);
+		}
+
+		// Can we find our duplicate points?
+		for (size_t i = 0 ; i < n_duplicates ; i++)
+		{
+			point3d_t dup_nn = tree.nn(points[i]);
+			ensure(dist(dup_nn, points[i]) <= std::numeric_limits<double>::epsilon());
+		}
+	}
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
