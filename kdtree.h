@@ -254,11 +254,6 @@ public:
 	std::vector<PointType> k_nn(PointType const& p, size_t k) const
 	{
 #if 1
-		// This needs some work (too many nodes are visited)
-		// Strategy should be something like:
-		// - DFS left / right according to val[dim] w.r.t. split[dim]
-		// - When no nodes are left from this, explore nodes where the
-		//   splitting hypersphere crosses the splitting hyperplane
 		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
 
 		constexpr value_type max_dist = std::numeric_limits<value_type>::max();
