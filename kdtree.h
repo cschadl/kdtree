@@ -253,7 +253,7 @@ public:
 
 	std::vector<PointType> k_nn(PointType const& p, size_t k) const
 	{
-#if 0
+#if 1
 		// This needs some work (too many nodes are visited)
 		// Strategy should be something like:
 		// - DFS left / right according to val[dim] w.r.t. split[dim]
@@ -274,43 +274,51 @@ public:
 		if (!m_root)
 			return { knn_pq.top().point };
 
-		std::stack<node_t*> node_stack;
-		node_stack.emplace(m_root.get());
+		using ns_entry_t = std::tuple<node_t*, size_t, value_type>;
+
+		std::stack<ns_entry_t> node_stack;
+		node_stack.emplace(m_root.get(), 0, p[0] -  m_root->val[0]);
 
 		// To search, we explore the tree, pruning nodes that are
 		// too far away from the search point.
 
+		constexpr size_t max_size = std::numeric_limits<size_t>::max();
+
 		while (!node_stack.empty())
 		{
-			auto node = node_stack.top();
+			node_t* node;
+			size_t s;
+			value_type dist_to_plane;
+			std::tie(node, s, dist_to_plane) = node_stack.top();
+
 			node_stack.pop();
 
 			if (!node)
 				continue;
 
-			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
-
-			size_t const s = node->n_dim;
+			if (s < max_size)
+			{
+				if (std::abs(dist_to_plane) >= knn_pq.bottom().dist)
+					continue;
+			}
 
 			// Get the distance from the p to this node
 			value_type const dist_this_node = distance(p, node->val);
 			knn_pq.push(knn_query{node->val, dist_this_node});
 
-			value_type const dist_to_plane = p[s] - node->val[s];
+			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
 
-			if (dist_to_plane <= 0)
+			value_type const dist_this_to_plane = p[node->n_dim] - node->val[node->n_dim];
+
+			if (dist_this_to_plane <= 0)
 			{
-				if (std::abs(dist_to_plane) < knn_pq.bottom().dist)
-					node_stack.emplace((node->right_child).get());
-
-				node_stack.emplace((node->left_child).get());
+				node_stack.emplace((node->right_child).get(), node->n_dim, dist_this_to_plane);
+				node_stack.emplace((node->left_child).get(), max_size, dist_this_to_plane);
 			}
 			else
 			{
-				if (std::abs(dist_to_plane) < knn_pq.bottom().dist)
-					node_stack.emplace((node->left_child).get());
-
-				node_stack.emplace((node->right_child).get());
+				node_stack.emplace((node->left_child).get(), node->n_dim, dist_this_to_plane);
+				node_stack.emplace((node->right_child).get(), max_size, dist_this_to_plane);
 			}
 		}
 
