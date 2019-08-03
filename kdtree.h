@@ -193,26 +193,27 @@ public:
 		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
 
 		// Get the distance from the p to this node
-		value_type const dist_this_node = distance(p, node->val);
+		value_type const dist_this_node = distance_sq(p, node->val);
 		knn_pq.push(knn_query{node->val, dist_this_node});
 
 		size_t s = node->n_dim;
 
 		value_type const dist_to_plane = p[s] - node->val[s];
+		value_type const dist_to_plane_sq = dist_to_plane * dist_to_plane;
 
 		if (dist_to_plane <= 0)
 		{
 			// Traverse left, then right if the search sphere crosses the split plane
 			k_nn_recursive_(p, k, node->left_child.get(), knn_pq);
 
-			if (std::abs(dist_to_plane) < knn_pq.bottom().dist)
+			if (dist_to_plane_sq < knn_pq.bottom().dist)
 				k_nn_recursive_(p, k, node->right_child.get(), knn_pq);
 		}
 		else
 		{
 			k_nn_recursive_(p, k, node->right_child.get(), knn_pq);
 
-			if (std::abs(dist_to_plane) < knn_pq.bottom().dist)
+			if (dist_to_plane_sq < knn_pq.bottom().dist)
 				k_nn_recursive_(p, k, node->left_child.get(), knn_pq);
 		}
 	}
@@ -272,7 +273,8 @@ public:
 		using ns_entry_t = std::tuple<node_t*, size_t, value_type>;
 
 		std::stack<ns_entry_t> node_stack;
-		node_stack.emplace(m_root.get(), 0, p[0] -  m_root->val[0]);
+		value_type const d = p[0] - m_root->val[0];
+		node_stack.emplace(m_root.get(), 0, d * d);
 
 		// To search, we explore the tree, pruning nodes that are
 		// too far away from the search point.
@@ -283,8 +285,8 @@ public:
 		{
 			node_t* node;
 			size_t s;
-			value_type dist_to_plane;
-			std::tie(node, s, dist_to_plane) = node_stack.top();
+			value_type dist_to_plane_sq;
+			std::tie(node, s, dist_to_plane_sq) = node_stack.top();
 
 			node_stack.pop();
 
@@ -293,27 +295,28 @@ public:
 
 			if (s < max_size)
 			{
-				if (std::abs(dist_to_plane) >= knn_pq.bottom().dist)
+				if (dist_to_plane_sq >= knn_pq.bottom().dist)
 					continue;
 			}
 
 			// Get the distance from the p to this node
-			value_type const dist_this_node = distance(p, node->val);
+			value_type const dist_this_node = distance_sq(p, node->val);
 			knn_pq.push(knn_query{node->val, dist_this_node});
 
 			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
 
 			value_type const dist_this_to_plane = p[node->n_dim] - node->val[node->n_dim];
+			value_type const dist_this_to_plane_sq = dist_this_to_plane * dist_this_to_plane;
 
 			if (dist_this_to_plane <= 0)
 			{
-				node_stack.emplace((node->right_child).get(), node->n_dim, dist_this_to_plane);
-				node_stack.emplace((node->left_child).get(), max_size, dist_this_to_plane);
+				node_stack.emplace((node->right_child).get(), node->n_dim, dist_this_to_plane_sq);
+				node_stack.emplace((node->left_child).get(), max_size, dist_this_to_plane_sq);
 			}
 			else
 			{
-				node_stack.emplace((node->left_child).get(), node->n_dim, dist_this_to_plane);
-				node_stack.emplace((node->right_child).get(), max_size, dist_this_to_plane);
+				node_stack.emplace((node->left_child).get(), node->n_dim, dist_this_to_plane_sq);
+				node_stack.emplace((node->right_child).get(), max_size, dist_this_to_plane_sq);
 			}
 		}
 
