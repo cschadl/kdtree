@@ -1,8 +1,11 @@
 #pragma once
 
+// This isn't used for anything yet, I hope to use it for range search
+
 #include <point_traits.h>
 
 #include <limits>
+#include <cmath>
 //#include <initializer_list>
 
 // this stuff might work with C++17 for compile-time for... loops on Dim
@@ -19,7 +22,7 @@
 //}
 
 /// Axis-aligned bounding box in N dimensions.
-/// This bbox class only contains the operations needed for kd_tree search queries.
+/// This bbox class only contains the operations needed for kd_tree range search queries
 template <typename PointType, size_t Dim = point_traits<PointType>::dim()>
 class bbox
 {
@@ -33,12 +36,10 @@ private:
 
 public:
 	bbox()
+		: m_min(point_traits<PointType>::create(value_type(0)))
+		, m_max(point_traits<PointType>::create(value_type(0)))
 	{
-		for (size_t i = 0 ; i < Dim ; i++)
-		{
-			m_min[i] = 0;
-			m_max[i] = 0;
-		}
+
 	}
 
 	bbox(PointType min_, PointType max_)
