@@ -1,5 +1,7 @@
 #pragma once
 
+// This isn't used for anything yet, I hope to use it for range search
+
 #include <point_traits.h>
 
 #include <limits>
@@ -20,7 +22,7 @@
 //}
 
 /// Axis-aligned bounding box in N dimensions.
-/// This bbox class only contains the operations needed for kd_tree search queries.
+/// This bbox class only contains the operations needed for kd_tree range search queries
 template <typename PointType, size_t Dim = point_traits<PointType>::dim()>
 class bbox
 {
