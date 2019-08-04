@@ -279,8 +279,6 @@ public:
 		// To search, we explore the tree, pruning nodes that are
 		// too far away from the search point.
 
-		constexpr size_t max_size = std::numeric_limits<size_t>::max();
-
 		while (!node_stack.empty())
 		{
 			node_t* node;
@@ -290,14 +288,13 @@ public:
 
 			node_stack.pop();
 
-			if (!node)
+			if (!node)	// Traversed to leaf node
 				continue;
 
-			if (s < max_size)
-			{
-				if (dist_to_plane_sq >= knn_pq.bottom().dist)
-					continue;
-			}
+			// Prune this branch of the tree, since the query point is
+			// too far away from the splitting hyperplane
+			if (dist_to_plane_sq >= knn_pq.bottom().dist)
+				continue;
 
 			// Get the distance from the p to this node
 			value_type const dist_this_node = distance_sq(p, node->val);
@@ -311,12 +308,12 @@ public:
 			if (dist_this_to_plane <= 0)
 			{
 				node_stack.emplace((node->right_child).get(), node->n_dim, dist_this_to_plane_sq);
-				node_stack.emplace((node->left_child).get(), max_size, dist_this_to_plane_sq);
+				node_stack.emplace((node->left_child).get(), node->n_dim, value_type(-1));
 			}
 			else
 			{
 				node_stack.emplace((node->left_child).get(), node->n_dim, dist_this_to_plane_sq);
-				node_stack.emplace((node->right_child).get(), max_size, dist_this_to_plane_sq);
+				node_stack.emplace((node->right_child).get(), node->n_dim, value_type(-1));
 			}
 		}
 
