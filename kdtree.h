@@ -10,6 +10,7 @@
 #include <cmath>
 
 #include <point_traits.h>
+#include <bbox.h>
 #include <fixed_priority_queue.h>
 
 template <typename PointType, size_t Dim = point_traits<PointType>::dim()>
@@ -77,6 +78,12 @@ private:
 			// Backwards, for min-priority queue
 			return dist > rhs.dist;
 		}
+	};
+
+	struct range_search_query
+	{
+		node_t*				node;
+		bbox<PointType>	extent;
 	};
 
 	static typename point_traits<PointType>::value_type distance_sq(PointType const& pt1, PointType const& pt2)
@@ -339,6 +346,48 @@ public:
 	{
 		std::vector<PointType> nn_pt = k_nn_recursive(p, 1 /* k */);
 		return nn_pt.front();
+	}
+
+	std::vector<PointType> range_search(bbox<PointType>& range_bbox)
+	{
+		using bbox_t = bbox<PointType>;
+
+		auto max_val = std::numeric_limits<value_type>::max();
+
+		PointType min_pt = point_traits<PointType>::create(-max_val);
+		PointType max_pt = point_traits<PointType>::create( max_val);
+
+		std::stack<range_search_query> query_stack;
+		query_stack.emplace(range_search_query{m_root.get(), bbox_t(min_pt, max_pt)});
+
+		std::vector<PointType> points_in_range;
+
+		size_t s = 0;
+
+		while (!query_stack.empty())
+		{
+			range_search_query q = query_stack.top();
+			query_stack.pop();
+
+			node_t* q_n = q.node;
+			bbox_t const& q_bbox = q.extent;
+
+			if (!q_n)
+				continue;
+
+			if (range_bbox.contains(q_n->val))
+				points_in_range.push_back(q_n->val);
+
+			bbox_t left_bbox, right_bbox;
+			value_type split_val = q_n->val[s];
+			if (q_bbox.split((s++) % Dim, split_val, left_bbox, right_bbox))
+			{
+				query_stack.emplace(range_search_query{q_n->left_child.get(), left_bbox});
+				query_stack.emplace(range_search_query{q_n->right_child.get(), right_bbox});
+			}
+		}
+
+		return points_in_range;
 	}
 
 	size_t last_q_nodes_visited() const

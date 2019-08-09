@@ -259,6 +259,28 @@ namespace tut
 			ensure(dist(dup_nn, points[i]) <= std::numeric_limits<double>::epsilon());
 		}
 	}
+
+	template <> template <>
+	void kdtree_test_t::object::test<7>()
+	{
+		set_test_name("range search");
+
+		std::vector<point2d_t> points = {
+			{ 2, 3}, {5, 4}, {9, 6}, {4, 7}, {8, 1}, {7, 2}
+		};
+
+		kd_tree<point2d_t> tree;
+		tree.build(points.begin(), points.end());
+
+		bbox<point2d_t> search_bbox({3, 2}, {7.5, 8});
+		std::vector<point2d_t> range_pts = tree.range_search(search_bbox);
+
+		ensure(range_pts.size() == 3);
+
+		ensure(std::find(range_pts.begin(), range_pts.end(), point2d_t{7, 2}) != range_pts.end());
+		ensure(std::find(range_pts.begin(), range_pts.end(), point2d_t{4, 7}) != range_pts.end());
+		ensure(std::find(range_pts.begin(), range_pts.end(), point2d_t{5, 4}) != range_pts.end());
+	}
 };
 
 
