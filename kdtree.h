@@ -375,6 +375,9 @@ public:
 			if (!q_n)
 				continue;
 
+			if (!range_bbox.intersects(q_bbox))
+				continue;
+
 			if (range_bbox.contains(q_n->val))
 				points_in_range.push_back(q_n->val);
 
