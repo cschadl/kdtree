@@ -362,8 +362,6 @@ public:
 
 		std::vector<PointType> points_in_range;
 
-		size_t s = 0;
-
 		while (!query_stack.empty())
 		{
 			range_search_query q = query_stack.top();
@@ -382,8 +380,8 @@ public:
 				points_in_range.push_back(q_n->val);
 
 			bbox_t left_bbox, right_bbox;
-			value_type split_val = q_n->val[s];
-			if (q_bbox.split((s++) % Dim, split_val, left_bbox, right_bbox))
+			value_type split_val = q_n->val[q_n->n_dim];
+			if (q_bbox.split(q_n->n_dim, split_val, left_bbox, right_bbox))
 			{
 				query_stack.emplace(range_search_query{q_n->left_child.get(), left_bbox});
 				query_stack.emplace(range_search_query{q_n->right_child.get(), right_bbox});
