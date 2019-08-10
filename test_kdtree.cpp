@@ -259,6 +259,70 @@ namespace tut
 			ensure(dist(dup_nn, points[i]) <= std::numeric_limits<double>::epsilon());
 		}
 	}
+
+	template <> template <>
+	void kdtree_test_t::object::test<7>()
+	{
+		set_test_name("range search 2d");
+
+		std::vector<point2d_t> points = {
+			{ 2, 3}, {5, 4}, {9, 6}, {4, 7}, {8, 1}, {7, 2}
+		};
+
+		kd_tree<point2d_t> tree;
+		tree.build(points.begin(), points.end());
+
+		bbox<point2d_t> search_bbox({3, 2}, {7.5, 8});
+		std::vector<point2d_t> range_pts = tree.range_search(search_bbox);
+
+		ensure(range_pts.size() == 3);
+
+		ensure(std::find(range_pts.begin(), range_pts.end(), point2d_t{7, 2}) != range_pts.end());
+		ensure(std::find(range_pts.begin(), range_pts.end(), point2d_t{4, 7}) != range_pts.end());
+		ensure(std::find(range_pts.begin(), range_pts.end(), point2d_t{5, 4}) != range_pts.end());
+	}
+
+	template <> template <>
+	void kdtree_test_t::object::test<8>()
+	{
+		set_test_name("range search 3d");
+
+		using bbox_t = bbox<point3d_t>;
+
+		const size_t n_pts = 1000;
+		std::vector<point3d_t> points(n_pts);
+
+		std::mt19937_64 pt_generator(0x19efa8471bb936a0);
+		std::uniform_real_distribution<double> rand_pt(-10.0, 10.0);
+
+		for (size_t i = 0 ; i < n_pts ; i++)
+			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
+
+		kd_tree<point3d_t> tree;
+		tree.build(points.begin(), points.end());
+
+		point3d_t pt_min{-2, -2, -2};
+		point3d_t pt_max{ 2,  2,  2};
+		bbox_t search_bbox(pt_min, pt_max);
+		std::vector<point3d_t> points_in_range = tree.range_search(search_bbox);
+
+		ensure("Search returned empty set", !points_in_range.empty());
+
+		for (point3d_t const& p : points)
+		{
+			if (p[0] >= pt_min[0] && p[1] >= pt_min[1] && p[2] >= pt_min[2]
+				 && p[0] <= pt_max[0] && p[1] <= pt_max[1] && p[2] <= pt_max[2])
+			{
+				ensure(
+					(boost::format("Point (%.4f, %.4f, %.4f) not found in search results") % p[0] % p[1] % p[2]).str(),
+					std::find(points_in_range.begin(), points_in_range.end(), p) != points_in_range.end());
+			}
+		}
+
+		size_t const nodes_visited = tree.last_q_nodes_visited();
+		//std::cout << nodes_visited << " nodes visited" << std::endl;
+		ensure((boost::format("Too many nodes visited: %d") % nodes_visited).str(), nodes_visited < 100);
+	}
 };
 
 
