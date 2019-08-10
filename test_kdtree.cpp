@@ -318,6 +318,10 @@ namespace tut
 					std::find(points_in_range.begin(), points_in_range.end(), p) != points_in_range.end());
 			}
 		}
+
+		size_t const nodes_visited = tree.last_q_nodes_visited();
+		//std::cout << nodes_visited << " nodes visited" << std::endl;
+		ensure((boost::format("Too many nodes visited: %d") % nodes_visited).str(), nodes_visited < 100);
 	}
 };
 

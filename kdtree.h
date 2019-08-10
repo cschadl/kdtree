@@ -348,9 +348,11 @@ public:
 		return nn_pt.front();
 	}
 
-	std::vector<PointType> range_search(bbox<PointType>& range_bbox)
+	std::vector<PointType> range_search(bbox<PointType>& range_bbox) const
 	{
 		using bbox_t = bbox<PointType>;
+
+		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
 
 		auto max_val = std::numeric_limits<value_type>::max();
 
@@ -376,11 +378,14 @@ public:
 			if (!range_bbox.intersects(q_bbox))
 				continue;
 
+			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
+
 			if (range_bbox.contains(q_n->val))
 				points_in_range.push_back(q_n->val);
 
 			bbox_t left_bbox, right_bbox;
 			value_type split_val = q_n->val[q_n->n_dim];
+
 			if (q_bbox.split(q_n->n_dim, split_val, left_bbox, right_bbox))
 			{
 				query_stack.emplace(range_search_query{q_n->left_child.get(), left_bbox});
