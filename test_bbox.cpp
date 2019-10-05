@@ -1,3 +1,5 @@
+// Unit tests for bbox class
+
 #include "bbox.h"
 
 #include <tut/tut.hpp>
@@ -10,7 +12,9 @@ namespace tut
 	struct bbox_test_data
 	{
 		using point2d_t = std::array<double, 2>;
+		using point3d_t = std::array<double, 3>;
 		using bbox2d_t = bbox<point2d_t>;
+		using bbox3d_t = bbox<point3d_t>;
 	};
 
 	using bbox_test_t = test_group<bbox_test_data, 10>;
@@ -18,6 +22,27 @@ namespace tut
 
 	template<> template<>
 	void bbox_test_t::object::test<1>()
+	{
+		set_test_name("Default constructor");
+
+		bbox3d_t bbox_empty;
+		ensure(bbox_empty.empty());
+		ensure(bbox_empty.min() == point3d_t{ 0, 0, 0});
+		ensure(bbox_empty.max() == point3d_t{ 0, 0, 0});
+		ensure(bbox_empty.valid());
+	}
+
+	template<> template<>
+	void bbox_test_t::object::test<2>()
+	{
+		set_test_name("Invalid bbox");
+
+		bbox2d_t bbox_invalid( { 1.0, 1.0 }, { -1.0, -1.0 } );
+		ensure(!bbox_invalid.valid());
+	}
+
+	template<> template<>
+	void bbox_test_t::object::test<3>()
 	{
 		set_test_name("Intersects");
 
@@ -29,7 +54,7 @@ namespace tut
 	}
 
 	template <> template <>
-	void bbox_test_t::object::test<2>()
+	void bbox_test_t::object::test<4>()
 	{
 		set_test_name("Disjoint");
 
@@ -41,7 +66,7 @@ namespace tut
 	}
 
 	template <> template <>
-	void bbox_test_t::object::test<3>()
+	void bbox_test_t::object::test<5>()
 	{
 		set_test_name("Contains");
 
@@ -51,7 +76,7 @@ namespace tut
 	}
 
 	template <> template<>
-	void bbox_test_t::object::test<4>()
+	void bbox_test_t::object::test<6>()
 	{
 		set_test_name("Intersection");
 
@@ -64,7 +89,7 @@ namespace tut
 	}
 
 	template <> template <>
-	void bbox_test_t::object::test<5>()
+	void bbox_test_t::object::test<7>()
 	{
 		set_test_name("split");
 
@@ -78,29 +103,3 @@ namespace tut
 		ensure(bbox_gt == bbox2d_t{ { 1.5,-3}, { 4, 7 }});
 	}
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -49,6 +49,9 @@ public:
 
 	}
 
+	PointType const& min() const { return m_min; }
+	PointType const& max() const { return m_max; }
+
 	bool operator==(bbox<PointType, Dim> const& rhs) const
 	{
 		return m_min == rhs.m_min && m_max == rhs.m_max;
