@@ -1,0 +1,11 @@
+# top-most .editorconfig file
+root = true
+
+[*.{c,cpp,h,hpp}]
+indent_style = tab
+indent_size = 3
+end_of_line = lf
+
+[Makefile]
+indent_style = tab
+
