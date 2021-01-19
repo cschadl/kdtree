@@ -209,7 +209,7 @@ namespace tut
 			}
 		}
 
-		std::cout << "Avg nodes visited: " << total_nodes_visited / (seeds.size() * n_q_pts) << std::endl;
+		//std::cout << "Avg nodes visited: " << total_nodes_visited / (seeds.size() * n_q_pts) << std::endl;
 	}
 
 	template <> template <>
