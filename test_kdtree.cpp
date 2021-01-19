@@ -62,7 +62,7 @@ namespace tut
 							q[0] % q[1] % q[2] % i % j %
 							p_nq[0] % p_nq[1] % p_nq[2] % dist_q_p_nq %
 							nn_pts[j][0] % nn_pts[j][1] % nn_pts[j][2] % dist_q_nn_j).str(),
-					nn_pts[j] == p_nq || abs(dist_q_p_nq - dist_q_nn_j) < 1.0e-12);
+					nn_pts[j] == p_nq || std::abs(dist_q_p_nq - dist_q_nn_j) < 1.0e-12);
 
 				j++;
 			}
