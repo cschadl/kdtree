@@ -2,8 +2,7 @@
 
 #include <tut/tut.hpp>
 
-#include <boost/format.hpp>
-
+#include <iomanip>
 #include <iostream>
 #include <array>
 #include <vector>
@@ -33,6 +32,25 @@ namespace tut
 			return std::sqrt(dist_sq);
 		}
 
+		static std::string make_test_knn_err_str(
+			point3d_t const & q,
+			point3d_t const & pt_expected,
+			point3d_t const & pt_actual,
+			size_t i, size_t j,
+			double dist_q_p_nq,
+			double dist_q_nn_j)
+		{
+			std::ostringstream error_oss;
+			error_oss << "Point " << std::setprecision(4)
+						<< "(" << q[0] << ", " << q[1] << ", " << q[2] << ") (i: " << i << ") nn " << j
+						<< ", Expected: "
+						<< "(" << pt_expected[0] << "," << pt_expected[1] << "," << pt_expected[2] << ") (dist: " << std::setprecision(6) << dist_q_p_nq
+						<< "), got: (" << std::setprecision(4) << pt_actual[0] << ", " << pt_actual[1] << ", " << pt_actual[2] << ") (dist: "
+						<< std::setprecision(6) << dist_q_nn_j << ")";
+			
+			return error_oss.str();
+		}
+
 		static void test_knn(point3d_t const& q,
 									std::vector<point3d_t> const& points,
 									size_t n_neighbors,
@@ -58,11 +76,8 @@ namespace tut
 				double const dist_q_nn_j = dist(q, nn_pts[j]);
 
 				ensure(
-					(boost::format("Point (%.4f, %.4f, %.4f) (i: %u) nn %d, Expected: (%.4f, %.4f, %.4f) (dist %.6f), got: (%.4f, %.4f, %.4f) (dist %.6f)") %
-							q[0] % q[1] % q[2] % i % j %
-							p_nq[0] % p_nq[1] % p_nq[2] % dist_q_p_nq %
-							nn_pts[j][0] % nn_pts[j][1] % nn_pts[j][2] % dist_q_nn_j).str(),
-					nn_pts[j] == p_nq || std::abs(dist_q_p_nq - dist_q_nn_j) < 1.0e-12);
+					make_test_knn_err_str(q, p_nq, nn_pts[j], i, j, dist_q_p_nq, dist_q_nn_j),
+					std::abs(dist_q_p_nq - dist_q_nn_j) < std::numeric_limits<double>::epsilon());
 
 				j++;
 			}
@@ -139,8 +154,6 @@ namespace tut
 
 		ensure(nn_kdtree == nn_actual);
 
-		//std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
-
 		ensure(tree.last_q_nodes_visited() < n_pts / 3);
 	}
 
@@ -201,15 +214,12 @@ namespace tut
 				point3d_t q = { rand_pt(q_pt_generator), rand_pt(q_pt_generator), rand_pt(q_pt_generator) };
 
 				std::vector<point3d_t> nn_pts = tree.k_nn(q, n_neighbors);
-				//std::cout << "Num nodes visited: " << tree.last_q_nodes_visited() << std::endl;
 
 				total_nodes_visited += tree.last_q_nodes_visited();
 
 				test_knn(q, points, n_neighbors, nn_pts, i, seed);
 			}
 		}
-
-		//std::cout << "Avg nodes visited: " << total_nodes_visited / (seeds.size() * n_q_pts) << std::endl;
 	}
 
 	template <> template <>
@@ -314,14 +324,13 @@ namespace tut
 				 && p[0] <= pt_max[0] && p[1] <= pt_max[1] && p[2] <= pt_max[2])
 			{
 				ensure(
-					(boost::format("Point (%.4f, %.4f, %.4f) not found in search results") % p[0] % p[1] % p[2]).str(),
+					"Point not found in search results",
 					std::find(points_in_range.begin(), points_in_range.end(), p) != points_in_range.end());
 			}
 		}
 
 		size_t const nodes_visited = tree.last_q_nodes_visited();
-		//std::cout << nodes_visited << " nodes visited" << std::endl;
-		ensure((boost::format("Too many nodes visited: %d") % nodes_visited).str(), nodes_visited < 100);
+		ensure("Too many nodes visited", nodes_visited < 100);
 	}
 };
 
