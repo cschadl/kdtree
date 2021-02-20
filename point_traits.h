@@ -35,4 +35,3 @@ struct point_traits< std::array<T, N> >
 		return detail_::make_array(val, std::make_index_sequence<N>{});
 	}
 };
-

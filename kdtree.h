@@ -143,7 +143,6 @@ public:
 	template <typename InputIterator>
 	void build(InputIterator begin, InputIterator end)
 	{
-#if 1
 		using ns_entry_t = node_stack_entry<InputIterator>;
 
 		m_root = std::make_unique<node_t>();
@@ -187,9 +186,6 @@ public:
 				node_stack.emplace(node->right_child.get(), median_1, entry.end, dim_n);
 			}
 		}
-#else
-		build_recursive(begin, end);
-#endif
 	}
 
 	void k_nn_recursive_(PointType const& p, size_t const k, node_t* node, fixed_priority_queue<knn_query>& knn_pq) const
@@ -259,20 +255,17 @@ public:
 		return k_nn_pts;
 	}
 
-	std::vector<PointType> k_nn(PointType const& p, size_t k) const
+private:
+	std::vector<PointType> k_nn_(PointType const& p, size_t k, value_type max_dist_sq) const
 	{
-#if 1
 		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
-
-		constexpr value_type max_dist = std::numeric_limits<value_type>::max();
 
 		fixed_priority_queue<knn_query> knn_pq(k);
 
-		// Initialize max_dist_pt to ( max, max, ..., max)
-		PointType max_dist_pt = point_traits<PointType>::create(max_dist);
-
-		for (size_t i = 0 ; i < k ; i++)
-			knn_pq.push(knn_query{max_dist_pt, max_dist});
+		// Initialize max_dist_pt to ( max, max, ..., max )
+		constexpr value_type max_val = std::numeric_limits<value_type>::max();
+		PointType max_dist_pt = point_traits<PointType>::create(max_val);
+		knn_pq.push(knn_query{max_dist_pt, max_val});
 
 		if (!m_root)
 			return { knn_pq.top().point };
@@ -298,10 +291,18 @@ public:
 			if (!node)	// Traversed to leaf node
 				continue;
 
-			// Prune this branch of the tree, since the query point is
-			// too far away from the splitting hyperplane
 			if (dist_to_plane_sq >= knn_pq.bottom().dist)
+			{
+				// Prune this branch of the tree, since the query point is
+				// too far away from the splitting hyperplane
 				continue;
+			}
+
+			if (dist_to_plane_sq >= max_dist_sq)
+			{
+				// This branch is outside of our max search dist, so prune it
+				continue;
+			}
 
 			// Get the distance from the p to this node
 			value_type const dist_this_node = distance_sq(p, node->val);
@@ -324,27 +325,32 @@ public:
 			}
 		}
 
-		std::vector<PointType> k_nn_pts(k, max_dist_pt);
+		std::vector<PointType> k_nn_pts(knn_pq.size(), max_dist_pt);
 		size_t i = 0;
 
 		while (!knn_pq.empty())
 		{
 			knn_query const& pt_dist = knn_pq.top();
-			if (pt_dist.dist < max_dist)
+			if (pt_dist.dist < max_dist_sq)
 				k_nn_pts[i++] = pt_dist.point;
 
 			knn_pq.pop();
 		}
+		if (i > 0)
+			k_nn_pts.erase(k_nn_pts.begin() + i, k_nn_pts.end());
 
 		return k_nn_pts;
-#else
-		return k_nn_recursive(p, k);
-#endif
+	}
+
+public:
+	std::vector<PointType> k_nn(PointType const& p, size_t k) const
+	{
+		return k_nn_(p, k, std::numeric_limits<value_type>::max());
 	}
 
 	PointType nn(PointType const& p) const
 	{
-		std::vector<PointType> nn_pt = k_nn_recursive(p, 1 /* k */);
+		std::vector<PointType> nn_pt = k_nn(p, 1 /* k */);
 		return nn_pt.front();
 	}
 
@@ -398,34 +404,7 @@ public:
 
 	std::vector<PointType> radius_search(PointType const& p, double r)
 	{
-		double const dist_sq = r * r;
-
-		// Make a bbox that contains the sphere of radius r
-		double const cube_vert_dist = ::sqrt(dist_sq * 3);
-		
-		PointType min_pt = p;
-		for (size_t i = 0 ; i < p.size() ; i++)
-			min_pt[i] -= cube_vert_dist;	// TODO - add something to point_traits<PointType> for this
-
-		PointType max_pt = p;
-		for (size_t i = 0 ; i < p.size() ; i++)
-			max_pt[i] += cube_vert_dist;
-
-		bbox<PointType> search_bbox{min_pt, max_pt};
-		
-		auto box_results = range_search(search_bbox);
-
-		// Remove any results outside the search radius
-		auto points_outside_sphere = std::remove_if(
-			box_results.begin(), box_results.end(),
-			[dist_sq, &p](auto const& res_p)
-			{
-				return distance_sq(p, res_p) > dist_sq;
-			});
-		
-		box_results.erase(points_outside_sphere, box_results.end());
-
-		return box_results;
+		return k_nn_(p, std::numeric_limits<size_t>::max(), r * r);
 	}
 
 	size_t last_q_nodes_visited() const
