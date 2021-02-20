@@ -396,20 +396,43 @@ public:
 		return points_in_range;
 	}
 
+	std::vector<PointType> radius_search(PointType const& p, double r)
+	{
+		double const dist_sq = r * r;
+
+		// Make a bbox that contains the sphere of radius r
+		double const cube_vert_dist = ::sqrt(dist_sq * 3);
+		
+		PointType min_pt = p;
+		for (size_t i = 0 ; i < p.size() ; i++)
+			min_pt[i] -= cube_vert_dist;	// TODO - add something to point_traits<PointType> for this
+
+		PointType max_pt = p;
+		for (size_t i = 0 ; i < p.size() ; i++)
+			max_pt[i] += cube_vert_dist;
+
+		bbox<PointType> search_bbox{min_pt, max_pt};
+		
+		auto box_results = range_search(search_bbox);
+
+		// Remove any results outside the search radius
+		auto points_outside_sphere = std::remove_if(
+			box_results.begin(), box_results.end(),
+			[dist_sq, &p](auto const& res_p)
+			{
+				return distance_sq(p, res_p) > dist_sq;
+			});
+		
+		box_results.erase(points_outside_sphere, box_results.end());
+
+		return box_results;
+	}
+
 	size_t last_q_nodes_visited() const
 	{
 		return m_q_nodes_visited;
 	}
 };
-
-
-
-
-
-
-
-
-
 
 
 

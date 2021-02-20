@@ -332,6 +332,37 @@ namespace tut
 		size_t const nodes_visited = tree.last_q_nodes_visited();
 		ensure("Too many nodes visited", nodes_visited < 100);
 	}
+
+	template <> template <>
+	void kdtree_test_t::object::test<9>()
+	{
+		set_test_name("radius search 2d");
+
+		const double eps = 1.0e-3;
+
+		point2d_t const test_pt{ 4, 3 };
+
+		std::vector<point2d_t> points = {
+			{ 3.1, 3.5 },	// dist = 1.02 (out)
+			{ 3.0, 2.0 },	// dist = 1.41 (out)
+			{ 4.0, 3.3 },	// dist = 0.09 (in)
+			{ 4.25, 3.5 },	// dist = 0.3125 (in)
+			{ 5.0, 2.0 },	// dist = 1.41 (out)
+			{ 4.0, 1.2 }	// dist = 1.8 (out)
+		};
+
+		kd_tree<point2d_t> tree;
+		tree.build(points.begin(), points.end());
+
+		auto near_pts1 = tree.radius_search(test_pt, 1.0 + eps);
+		ensure_equals(near_pts1.size(), 2);
+
+		ensure("point 4.0, 3.3 not found in search radius = 1",
+			std::find(near_pts1.begin(), near_pts1.end(), point2d_t{4.0, 3.3}) != near_pts1.end());
+
+		ensure("point 4.25, 3.5 not found in search radius = 1",
+			std::find(near_pts1.begin(), near_pts1.end(), point2d_t{4.25, 3.5}) != near_pts1.end());
+	}
 };
 
 
