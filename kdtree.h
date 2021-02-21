@@ -296,17 +296,16 @@ private:
 				// Prune this branch of the tree, since the query point is
 				// too far away from the splitting hyperplane
 				continue;
-			}
 
-			if (dist_to_plane_sq >= max_dist_sq)
-			{
-				// This branch is outside of our max search dist, so prune it
-				continue;
+				// It seems like there should also be some optimization that we can do
+				// where we prune nodes that are greater than max_dist_sq away
+				// from the search point, but that seems to break things
 			}
 
 			// Get the distance from the p to this node
 			value_type const dist_this_node = distance_sq(p, node->val);
-			knn_pq.push(knn_query{node->val, dist_this_node});
+			if (dist_this_node < max_dist_sq)
+				knn_pq.push(knn_query{node->val, dist_this_node});
 
 			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
 
