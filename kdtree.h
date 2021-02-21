@@ -335,8 +335,7 @@ private:
 
 			knn_pq.pop();
 		}
-		if (i > 0)
-			k_nn_pts.erase(k_nn_pts.begin() + i, k_nn_pts.end());
+		k_nn_pts.erase(k_nn_pts.begin() + i, k_nn_pts.end());
 
 		return k_nn_pts;
 	}
