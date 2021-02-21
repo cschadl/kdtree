@@ -20,7 +20,7 @@ namespace tut
 		static constexpr double max_val = std::numeric_limits<double>::max();
 
 		template <size_t N>
-		static double dist(std::array<double, N> const& p1, std::array<double, N> const& p2)
+		static double dist_sq(std::array<double, N> const& p1, std::array<double, N> const& p2)
 		{
 			double dist_sq = 0;
 			for (size_t i = 0 ; i < N ; i++)
@@ -29,7 +29,13 @@ namespace tut
 				dist_sq += (dp1p2_i * dp1p2_i);
 			}
 
-			return std::sqrt(dist_sq);
+			return dist_sq;
+		}
+
+		template <size_t N>
+		static double dist(std::array<double, N> const& p1, std::array<double, N> const& p2)
+		{
+			return std::sqrt(dist_sq(p1, p2));
 		}
 
 		static std::string make_test_knn_err_str(
@@ -397,47 +403,62 @@ namespace tut
 				std::find(near_pts3.begin(), near_pts3.end(), point2d_t{4.78, 1.7}) != near_pts3.end());
 		}
 	}
+
+	template <> template <>
+	void kdtree_test_t::object::test<10>()
+	{
+		set_test_name("radius search 3d");
+
+		std::mt19937_64 pt_generator(0xbeefbeebbaaacccf);
+		std::uniform_real_distribution<double> rand_pt(-2.0, 2.0);
+ 
+		// Generate a cloud of random points in the box with min_pt (-2.0, -2.0, -2.0) max_pt (2.0, 2.0, 2.0)
+		constexpr size_t n_pts = 5000;
+		std::array<point3d_t, n_pts> points;
+		for (size_t i = 0 ; i < n_pts ; i++)
+			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
+
+		// build the tree
+		kd_tree<point3d_t> tree;
+		tree.build(points.begin(), points.end());
+
+		// Generate a random test points points
+		constexpr size_t n_test_pts = 10;
+		for (size_t i = 0 ; i < n_test_pts; i++)
+		{
+			point3d_t test_pt{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
+
+			double const r = 0.5;
+			auto near_pts = tree.radius_search(test_pt, r);
+
+			// Check near-pts
+			std::vector<point3d_t> near_pts_check;
+			for (point3d_t const& p : points)
+			{
+				if (dist_sq(p, test_pt) < r * r)
+					near_pts_check.push_back(p);
+			}
+
+			auto dist_sq_test_pt = 
+				[&test_pt](point3d_t const& p1, point3d_t const& p2)
+				{
+					return dist_sq(p1, test_pt) < dist_sq(p2, test_pt);
+				};
+
+			std::sort(near_pts_check.begin(), near_pts_check.end(), dist_sq_test_pt);
+
+			auto ge_begin = std::lower_bound(near_pts_check.begin(), near_pts_check.end(), r * r,
+				[&test_pt](point3d_t const& p, double d_sq)
+				{
+					return dist_sq(p, test_pt) < d_sq;
+				});
+
+			size_t const n_near_pts = std::distance(near_pts_check.begin(), ge_begin);
+			ensure_equals(n_near_pts, near_pts.size());
+
+			for (size_t i = 0 ; i < n_near_pts; i++)
+				ensure(near_pts_check[i] == near_pts[i]);
+		}
+	}
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
