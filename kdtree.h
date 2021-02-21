@@ -352,7 +352,7 @@ public:
 		return nn_pt.front();
 	}
 
-	std::vector<PointType> range_search(bbox<PointType>& range_bbox) const
+	std::vector<PointType> range_search(bbox<PointType> const& range_bbox) const
 	{
 		using bbox_t = bbox<PointType>;
 
