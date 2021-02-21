@@ -481,5 +481,27 @@ namespace tut
 		auto near_pts = tree.radius_search(test_pt, 0.5);
 		ensure(near_pts.empty());
 	}
+
+	template <> template <>
+	void kdtree_test_t::object::test<12>()
+	{
+		set_test_name("no points in range");
+
+		using bbox_t = bbox<point3d_t>;
+
+		std::mt19937_64 pt_generator(0xefeebeebaaeaf987);
+		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);
+ 
+		constexpr size_t n_pts = 1000;
+		std::array<point3d_t, n_pts> points;
+		for (size_t i = 0 ; i < n_pts ; i++)
+			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
+		
+		kd_tree<point3d_t> tree;
+		tree.build(points.begin(), points.end());
+
+		auto pts_in_range = tree.range_search(bbox_t{point3d_t{1.1, 1.1, 1.1}, point3d_t{1.5, 1.5, 1.5}});
+		ensure(pts_in_range.empty());
+	}
 };
 
