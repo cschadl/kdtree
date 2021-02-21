@@ -413,7 +413,7 @@ namespace tut
 		std::uniform_real_distribution<double> rand_pt(-2.0, 2.0);
  
 		// Generate a cloud of random points in the box with min_pt (-2.0, -2.0, -2.0) max_pt (2.0, 2.0, 2.0)
-		constexpr size_t n_pts = 50000;
+		constexpr size_t n_pts = 5000;
 		std::array<point3d_t, n_pts> points;
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
@@ -423,7 +423,7 @@ namespace tut
 		tree.build(points.begin(), points.end());
 
 		// Generate a random test points points
-		constexpr size_t n_test_pts = 100 ;
+		constexpr size_t n_test_pts = 10;
 		for (size_t i = 0 ; i < n_test_pts; i++)
 		{
 			point3d_t test_pt{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
@@ -459,6 +459,27 @@ namespace tut
 			for (size_t i = 0 ; i < n_near_pts; i++)
 				ensure(near_pts_check[i] == near_pts[i]);
 		}
+	}
+
+	template <> template<>
+	void kdtree_test_t::object::test<11>()
+	{
+		set_test_name("no points in search radius");
+
+		std::mt19937_64 pt_generator(0xefeebeebaaeaf987);
+		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);
+ 
+		constexpr size_t n_pts = 1000;
+		std::array<point3d_t, n_pts> points;
+		for (size_t i = 0 ; i < n_pts ; i++)
+			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
+		
+		kd_tree<point3d_t> tree;
+		tree.build(points.begin(), points.end());
+
+		point3d_t const test_pt{ 2.0, 0, 0 };
+		auto near_pts = tree.radius_search(test_pt, 0.5);
+		ensure(near_pts.empty());
 	}
 };
 
