@@ -413,7 +413,7 @@ namespace tut
 		std::uniform_real_distribution<double> rand_pt(-2.0, 2.0);
  
 		// Generate a cloud of random points in the box with min_pt (-2.0, -2.0, -2.0) max_pt (2.0, 2.0, 2.0)
-		constexpr size_t n_pts = 5000;
+		constexpr size_t n_pts = 50000;
 		std::array<point3d_t, n_pts> points;
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
@@ -423,7 +423,7 @@ namespace tut
 		tree.build(points.begin(), points.end());
 
 		// Generate a random test points points
-		constexpr size_t n_test_pts = 10;
+		constexpr size_t n_test_pts = 100 ;
 		for (size_t i = 0 ; i < n_test_pts; i++)
 		{
 			point3d_t test_pt{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
