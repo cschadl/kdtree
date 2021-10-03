@@ -1,7 +1,7 @@
 CXX=g++
 INCLUDE=-I ./
-CFLAGS=-Wall -O3 -std=c++14
-CFLAGS_DEP=-std=c++14
+CFLAGS=-Wall -O3 -std=c++17 -pg
+CFLAGS_DEP=-std=c++17
 OUTDIR=Release
 
 OBJS=$(shell ls *.cpp | perl -pe 's/\.cpp$$/\.o/' | tr "\n" " ")
@@ -20,7 +20,7 @@ CPPFLAGS_DEBUG=-DDEBUG
 all: $(OUTEXE)
 
 $(OUTEXE) : $(OUTOBJS)
-	$(CXX) $(OUTOBJS) -o $(OUTEXE)
+	$(CXX) -pg $(OUTOBJS) -o $(OUTEXE)
 
 # This generates dependency rules
 -include $(OUTOBJS:.o=.d)
