@@ -188,7 +188,7 @@ namespace tut
 	{
 		set_test_name("knn search (3d)");
 
-		const size_t n_pts = 1000;
+		const size_t n_pts = 1000000;
 		std::vector<point3d_t> points(n_pts);
 
 		std::mt19937_64 pt_generator(0xfeebdaedfeebdaed);
@@ -233,7 +233,7 @@ namespace tut
 	{
 		set_test_name("duplicate points");
 
-		const size_t n_pts = 100;
+		const size_t n_pts = 100000;
 		const size_t n_duplicates = 15;
 
 		std::vector<point3d_t> points(n_pts + n_duplicates);
@@ -305,7 +305,7 @@ namespace tut
 
 		using bbox_t = bbox<point3d_t>;
 
-		const size_t n_pts = 1000;
+		const size_t n_pts = 100000;
 		std::vector<point3d_t> points(n_pts);
 
 		std::mt19937_64 pt_generator(0x19efa8471bb936a0);
@@ -336,7 +336,7 @@ namespace tut
 		}
 
 		size_t const nodes_visited = tree.last_q_nodes_visited();
-		ensure("Too many nodes visited", nodes_visited < 100);
+		ensure("Too many nodes visited", nodes_visited < n_pts / 10);
 	}
 
 	template <> template <>
@@ -413,8 +413,8 @@ namespace tut
 		std::uniform_real_distribution<double> rand_pt(-2.0, 2.0);
  
 		// Generate a cloud of random points in the box with min_pt (-2.0, -2.0, -2.0) max_pt (2.0, 2.0, 2.0)
-		constexpr size_t n_pts = 5000;
-		std::array<point3d_t, n_pts> points;
+		constexpr size_t n_pts = 500000;
+		std::vector<point3d_t> points(n_pts);
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
 
@@ -469,8 +469,8 @@ namespace tut
 		std::mt19937_64 pt_generator(0xefeebeebaaeaf987);
 		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);
  
-		constexpr size_t n_pts = 1000;
-		std::array<point3d_t, n_pts> points;
+		constexpr size_t n_pts = 100000;
+		std::vector<point3d_t> points(n_pts);
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
 		
@@ -492,8 +492,8 @@ namespace tut
 		std::mt19937_64 pt_generator(0xefeebeebaaeaf987);
 		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);
  
-		constexpr size_t n_pts = 1000;
-		std::array<point3d_t, n_pts> points;
+		constexpr size_t n_pts = 100000;
+		std::vector<point3d_t> points(n_pts);
 		for (size_t i = 0 ; i < n_pts ; i++)
 			points[i] = point3d_t{ rand_pt(pt_generator), rand_pt(pt_generator), rand_pt(pt_generator) };
 		
