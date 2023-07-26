@@ -2,7 +2,7 @@
 
 // This isn't used for anything yet, I hope to use it for range search
 
-#include <point_traits.h>
+#include <kdtree/detail/point_traits.hpp>
 
 #include <limits>
 #include <cmath>
@@ -20,6 +20,12 @@
 //{
 //	(func(num<Idx>{}), ...);
 //}
+
+namespace cds
+{
+
+namespace kdtree_detail_
+{
 
 /// Axis-aligned bounding box in N dimensions.
 /// This bbox class only contains the operations needed for kd_tree range search queries
@@ -131,3 +137,7 @@ public:
 		return true;
 	}
 };
+
+}	// namespace kdtree_detail_
+
+}	// namespace cds

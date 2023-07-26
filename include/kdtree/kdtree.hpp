@@ -9,11 +9,14 @@
 #include <limits>
 #include <cmath>
 
-#include <point_traits.h>
-#include <bbox.h>
-#include <fixed_priority_queue.h>
+#include <kdtree/detail/point_traits.hpp>
+#include <kdtree/detail/bbox.hpp>
+#include <kdtree/detail/fixed_priority_queue.hpp>
 
-template <typename PointType, size_t Dim = point_traits<PointType>::dim()>
+namespace cds
+{
+
+template <typename PointType, size_t Dim = kdtree_detail_::point_traits<PointType>::dim()>
 class kd_tree
 {
 	static_assert(Dim > 1, "Dim must be greater than 1");
@@ -45,7 +48,7 @@ private:
 	};
 
 	using node_t = node<PointType>;
-	using value_type = typename point_traits<PointType>::value_type;
+	using value_type = typename kdtree_detail_::point_traits<PointType>::value_type;
 
 	std::unique_ptr<node_t>	m_root;
 	size_t 						m_q_nodes_visited;	// Nodes visited for last query (debugging)
@@ -83,10 +86,10 @@ private:
 	struct range_search_query
 	{
 		node_t*				node;
-		bbox<PointType>	extent;
+		kdtree_detail_::bbox<PointType>	extent;
 	};
 
-	static typename point_traits<PointType>::value_type distance_sq(PointType const& pt1, PointType const& pt2)
+	static typename kdtree_detail_::point_traits<PointType>::value_type distance_sq(PointType const& pt1, PointType const& pt2)
 	{
 		value_type distance_sq = value_type(0);
 		for (size_t i = 0 ; i < Dim ; i++)
@@ -98,7 +101,7 @@ private:
 		return distance_sq;
 	}
 
-	static typename point_traits<PointType>::value_type distance(PointType const& pt1, PointType const& pt2)
+	static typename kdtree_detail_::point_traits<PointType>::value_type distance(PointType const& pt1, PointType const& pt2)
 	{
 		return std::sqrt(distance_sq(pt1, pt2));
 	}
@@ -188,7 +191,7 @@ public:
 		}
 	}
 
-	void k_nn_recursive_(PointType const& p, size_t const k, node_t* node, fixed_priority_queue<knn_query>& knn_pq) const
+	void k_nn_recursive_(PointType const& p, size_t const k, node_t* node, kdtree_detail_::fixed_priority_queue<knn_query>& knn_pq) const
 	{
 		if (!node)
 			return;
@@ -227,10 +230,10 @@ public:
 
 		constexpr value_type max_dist = std::numeric_limits<value_type>::max();
 
-		fixed_priority_queue<knn_query> knn_pq(k);
+		kdtree_detail_::fixed_priority_queue<knn_query> knn_pq(k);
 
 		// Initialize max_dist_pt to ( max, max, ..., max)
-		PointType max_dist_pt = point_traits<PointType>::create(max_dist);
+		PointType max_dist_pt = kdtree_detail_::point_traits<PointType>::create(max_dist);
 
 		for (size_t i = 0 ; i < k ; i++)
 			knn_pq.push(knn_query{max_dist_pt, max_dist});
@@ -260,11 +263,11 @@ private:
 	{
 		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
 
-		fixed_priority_queue<knn_query> knn_pq(k);
+		kdtree_detail_::fixed_priority_queue<knn_query> knn_pq(k);
 
 		// Initialize max_dist_pt to ( max, max, ..., max )
 		constexpr value_type max_val = std::numeric_limits<value_type>::max();
-		PointType max_dist_pt = point_traits<PointType>::create(max_val);
+		PointType max_dist_pt = kdtree_detail_::point_traits<PointType>::create(max_val);
 		knn_pq.push(knn_query{max_dist_pt, max_val});
 
 		if (!m_root)
@@ -352,16 +355,16 @@ public:
 		return nn_pt.front();
 	}
 
-	std::vector<PointType> range_search(bbox<PointType> const& range_bbox) const
+	std::vector<PointType> range_search(kdtree_detail_::bbox<PointType> const& range_bbox) const
 	{
-		using bbox_t = bbox<PointType>;
+		using bbox_t = kdtree_detail_::bbox<PointType>;
 
 		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
 
 		auto max_val = std::numeric_limits<value_type>::max();
 
-		PointType min_pt = point_traits<PointType>::create(-max_val);
-		PointType max_pt = point_traits<PointType>::create( max_val);
+		PointType min_pt = kdtree_detail_::point_traits<PointType>::create(-max_val);
+		PointType max_pt = kdtree_detail_::point_traits<PointType>::create( max_val);
 
 		std::stack<range_search_query> query_stack;
 		query_stack.emplace(range_search_query{m_root.get(), bbox_t(min_pt, max_pt)});
@@ -411,6 +414,6 @@ public:
 	}
 };
 
-
+}	// namespace cds
 
 
