@@ -1,25 +1,9 @@
 #pragma once
 
-// This isn't used for anything yet, I hope to use it for range search
-
 #include <kdtree/detail/point_traits.hpp>
 
 #include <limits>
 #include <cmath>
-//#include <initializer_list>
-
-// this stuff might work with C++17 for compile-time for... loops on Dim
-//template <size_t N>
-//struct num
-//{
-//	static const constexpr auto value = N;
-//};
-//
-//template <class F, size_t... Idx>
-//void for_(F func, std::index_sequence<Idx...>)
-//{
-//	(func(num<Idx>{}), ...);
-//}
 
 namespace cds
 {
