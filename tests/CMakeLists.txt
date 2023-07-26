@@ -7,4 +7,8 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/tester.cpp
 )
 
-add_executable("kdtree-tests" ${TESTS_SRC})
+set(KDTREE_TESTS "kdtree-tests")
+
+add_executable(${KDTREE_TESTS} ${TESTS_SRC})
+
+target_include_directories(${KDTREE_TESTS} PRIVATE ${KDTREE_INCLUDE_DIR})
