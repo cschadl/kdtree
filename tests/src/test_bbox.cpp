@@ -1,11 +1,13 @@
 // Unit tests for bbox class
 
-#include "bbox.h"
+#include <kdtree/detail/bbox.hpp>
 
 #include <tut/tut.hpp>
 
 #include <iostream>
 #include <array>
+
+using namespace cds::kdtree_detail_;
 
 namespace tut
 {

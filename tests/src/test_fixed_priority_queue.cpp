@@ -1,6 +1,8 @@
-#include "fixed_priority_queue.h"
+#include <kdtree/detail/fixed_priority_queue.hpp>
 
 #include <tut/tut.hpp>
+
+using namespace cds::kdtree_detail_;
 
 namespace tut
 {

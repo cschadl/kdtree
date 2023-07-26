@@ -1,6 +1,8 @@
-#include "point_traits.h"
+#include <kdtree/detail/point_traits.hpp>
 
 #include <tut/tut.hpp>
+
+using namespace cds::kdtree_detail_;
 
 namespace tut
 {
