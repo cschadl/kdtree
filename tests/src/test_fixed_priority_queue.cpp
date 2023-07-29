@@ -2,7 +2,7 @@
 
 #include <tut/tut.hpp>
 
-using namespace cds::kdtree_detail_;
+using namespace cds::kdtree::detail_;
 
 namespace tut
 {

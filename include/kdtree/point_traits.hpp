@@ -5,7 +5,7 @@
 
 namespace cds
 {
-namespace kdtree_detail_
+namespace kdtree
 {
 
 template <typename PointType>

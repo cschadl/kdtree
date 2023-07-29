@@ -1,4 +1,5 @@
 #include <kdtree/kdtree.hpp>
+#include <kdtree/detail/fixed_priority_queue.hpp>
 
 #include <tut/tut.hpp>
 
@@ -9,7 +10,7 @@
 #include <limits>
 #include <random>
 
-using namespace cds;
+using namespace cds::kdtree;
 
 namespace tut
 {
@@ -70,7 +71,7 @@ namespace tut
 				return dist(p1, q) > dist(p2, q);	// min priority queue, so reversed
 			};
 
-			kdtree_detail_::fixed_priority_queue<point3d_t, decltype(cmp_dist_q)> nn_min_pq(n_neighbors, cmp_dist_q);
+			detail_::fixed_priority_queue<point3d_t, decltype(cmp_dist_q)> nn_min_pq(n_neighbors, cmp_dist_q);
 			for (point3d_t const& p : points)
 				nn_min_pq.push(p);
 
@@ -290,7 +291,7 @@ namespace tut
 		kd_tree<point2d_t> tree;
 		tree.build(points.begin(), points.end());
 
-		kdtree_detail_::bbox<point2d_t> search_bbox({3, 2}, {7.5, 8});
+		bbox<point2d_t> search_bbox({3, 2}, {7.5, 8});
 		std::vector<point2d_t> range_pts = tree.range_search(search_bbox);
 
 		ensure(range_pts.size() == 3);
@@ -305,7 +306,7 @@ namespace tut
 	{
 		set_test_name("range search 3d");
 
-		using bbox_t = kdtree_detail_::bbox<point3d_t>;
+		using bbox_t = bbox<point3d_t>;
 
 		const size_t n_pts = 1000;
 		std::vector<point3d_t> points(n_pts);
@@ -489,7 +490,7 @@ namespace tut
 	{
 		set_test_name("no points in range");
 
-		using bbox_t = kdtree_detail_::bbox<point3d_t>;
+		using bbox_t = bbox<point3d_t>;
 
 		std::mt19937_64 pt_generator(0xefeebeebaaeaf987);
 		std::uniform_real_distribution<double> rand_pt(-1.0, 1.0);

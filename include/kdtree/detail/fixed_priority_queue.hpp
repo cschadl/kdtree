@@ -8,7 +8,10 @@
 namespace cds
 {
 
-namespace kdtree_detail_
+namespace kdtree
+{
+
+namespace detail_
 {
 
 template <typename T, typename C = std::less<T>>
@@ -76,6 +79,8 @@ public:
 	}
 };
 
-} // namespace kdtree_detail_
+} // namespace kdtree
+
+} // namespace detail
 
 } // namespace cds

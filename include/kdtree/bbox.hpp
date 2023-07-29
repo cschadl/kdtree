@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kdtree/detail/point_traits.hpp>
+#include <kdtree/point_traits.hpp>
 
 #include <limits>
 #include <cmath>
@@ -8,7 +8,7 @@
 namespace cds
 {
 
-namespace kdtree_detail_
+namespace kdtree
 {
 
 /// Axis-aligned bounding box in N dimensions.
@@ -122,6 +122,6 @@ public:
 	}
 };
 
-}	// namespace kdtree_detail_
+}	// namespace kdtree
 
 }	// namespace cds
