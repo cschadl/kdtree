@@ -9,9 +9,15 @@
 #include <limits>
 #include <cmath>
 
-#include <point_traits.h>
-#include <bbox.h>
-#include <fixed_priority_queue.h>
+#include <kdtree/point_traits.hpp>
+#include <kdtree/bbox.hpp>
+#include <kdtree/detail/fixed_priority_queue.hpp>
+
+namespace cds
+{
+
+namespace kdtree
+{
 
 template <typename PointType, size_t Dim = point_traits<PointType>::dim()>
 class kd_tree
@@ -188,7 +194,7 @@ public:
 		}
 	}
 
-	void k_nn_recursive_(PointType const& p, size_t const k, node_t* node, fixed_priority_queue<knn_query>& knn_pq) const
+	void k_nn_recursive_(PointType const& p, size_t const k, node_t* node, detail_::fixed_priority_queue<knn_query>& knn_pq) const
 	{
 		if (!node)
 			return;
@@ -227,7 +233,7 @@ public:
 
 		constexpr value_type max_dist = std::numeric_limits<value_type>::max();
 
-		fixed_priority_queue<knn_query> knn_pq(k);
+		detail_::fixed_priority_queue<knn_query> knn_pq(k);
 
 		// Initialize max_dist_pt to ( max, max, ..., max)
 		PointType max_dist_pt = point_traits<PointType>::create(max_dist);
@@ -260,7 +266,7 @@ private:
 	{
 		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
 
-		fixed_priority_queue<knn_query> knn_pq(k);
+		detail_::fixed_priority_queue<knn_query> knn_pq(k);
 
 		// Initialize max_dist_pt to ( max, max, ..., max )
 		constexpr value_type max_val = std::numeric_limits<value_type>::max();
@@ -411,6 +417,6 @@ public:
 	}
 };
 
+} // namespace kdtree
 
-
-
+}	// namespace cds

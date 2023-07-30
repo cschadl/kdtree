@@ -2,6 +2,8 @@
 .cproject
 .settings
 .*.swp
-Release/
-Debug/
+**/Release/
+**/Debug/
 .vscode/
+build/
+out/

@@ -5,6 +5,15 @@
 #include <vector>
 #include <algorithm>
 
+namespace cds
+{
+
+namespace kdtree
+{
+
+namespace detail_
+{
+
 template <typename T, typename C = std::less<T>>
 class fixed_priority_queue
 {
@@ -69,3 +78,9 @@ public:
 		m_heap.pop_back();
 	}
 };
+
+} // namespace kdtree
+
+} // namespace detail
+
+} // namespace cds

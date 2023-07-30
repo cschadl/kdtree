@@ -3,6 +3,11 @@
 #include <array>
 #include <utility>
 
+namespace cds
+{
+namespace kdtree
+{
+
 template <typename PointType>
 struct point_traits
 {
@@ -35,3 +40,7 @@ struct point_traits< std::array<T, N> >
 		return detail_::make_array(val, std::make_index_sequence<N>{});
 	}
 };
+
+} // kdtree_detail_
+
+} // cds
