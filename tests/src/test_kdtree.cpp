@@ -63,7 +63,7 @@ namespace
 		double dist_q_nn_j;
 	};
 
-	std::string make_test_knn_err_str(knn_search_fail &fail)
+	std::string make_test_knn_err_str(knn_search_fail const &fail)
 	{
 		std::ostringstream error_oss;
 		error_oss << "Point " << std::setprecision(4)
