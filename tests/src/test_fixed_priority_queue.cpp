@@ -1,120 +1,105 @@
-#include <kdtree/detail/fixed_priority_queue.hpp>
+// Copyright (C) 2018 by Christopher Schadl <cschadl@gmail.com>
 
-#include <tut/tut.hpp>
+// Permission to use, copy, modify, and/or distribute this software for any purpose
+// with or without fee is hereby granted.
+
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD 
+// TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+// IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+// DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+// WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+// ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+#include <gtest/gtest.h>
+
+#include <kdtree/detail/fixed_priority_queue.hpp>
 
 using namespace cds::kdtree::detail_;
 
-namespace tut
+TEST(fixed_priority_queue, MaxHeapInsert)
 {
+	fixed_priority_queue<int> fx_max_queue(5);
+	EXPECT_TRUE(fx_max_queue.empty());
+	EXPECT_EQ(fx_max_queue.max_size(), 5);
 
-	struct fixed_priority_queue_data
-	{
+	EXPECT_TRUE(fx_max_queue.push(1));
+	EXPECT_EQ(fx_max_queue.top(), 1);
 
-	};
+	EXPECT_TRUE(fx_max_queue.push(-3));
+	EXPECT_EQ(fx_max_queue.top(), 1);
 
-	using fixed_priority_queue_test_t = test_group<fixed_priority_queue_data>;
-	fixed_priority_queue_test_t fixed_priority_queue("fixed_priority_queue");
+	EXPECT_TRUE(fx_max_queue.push(5));
+	EXPECT_EQ(fx_max_queue.top(), 5);
 
-	template <> template <>
-	void fixed_priority_queue_test_t::object::test<1>()
-	{
-		set_test_name("insert max heap");
+	EXPECT_TRUE(fx_max_queue.push(0));
+	EXPECT_EQ(fx_max_queue.top(), 5);
 
-		::fixed_priority_queue<int> fx_max_queue(5);
-		ensure(fx_max_queue.empty());
-		ensure(fx_max_queue.max_size() == 5);
+	EXPECT_TRUE(fx_max_queue.push(7));
+	EXPECT_EQ(fx_max_queue.top(), 7);
 
-		ensure(fx_max_queue.push(1));
-		ensure(fx_max_queue.top() == 1);
+	//queue is full
+	EXPECT_TRUE(!fx_max_queue.push(-5));	// < lowest priority element, not added
+	EXPECT_EQ(fx_max_queue.top(), 7);
 
-		ensure(fx_max_queue.push(-3));
-		ensure(fx_max_queue.top() == 1);
+	EXPECT_TRUE(fx_max_queue.push(-1));
+	EXPECT_EQ(fx_max_queue.top(), 7);
 
-		ensure(fx_max_queue.push(5));
-		ensure(fx_max_queue.top() == 5);
+	EXPECT_TRUE(fx_max_queue.push(10));
+	EXPECT_EQ(fx_max_queue.top(), 10);	// Adding this replaces -1 as smallest element
 
-		ensure(fx_max_queue.push(0));
-		ensure(fx_max_queue.top() == 5);
+	fx_max_queue.pop();
+	EXPECT_EQ(fx_max_queue.top(), 7);
 
-		ensure(fx_max_queue.push(7));
-		ensure(fx_max_queue.top() == 7);
+	fx_max_queue.pop();
+	EXPECT_EQ(fx_max_queue.top(), 5);
 
-		//queue is full
-		ensure(!fx_max_queue.push(-5));	// < lowest priority element, not added
-		ensure(fx_max_queue.top() == 7);
+	fx_max_queue.pop();
+	EXPECT_EQ(fx_max_queue.top(), 1);
 
-		ensure(fx_max_queue.push(-1));
-		ensure(fx_max_queue.top() == 7);
+	fx_max_queue.pop();
+	EXPECT_EQ(fx_max_queue.top(), 0);
 
-		ensure(fx_max_queue.push(10));
-		ensure(fx_max_queue.top() == 10);	// Adding this replaces -1 as smallest element
+	fx_max_queue.pop();
+	EXPECT_TRUE(fx_max_queue.empty());
+}
 
-		fx_max_queue.pop();
-		ensure(fx_max_queue.top() == 7);
+TEST(fixed_priority_queue, MinHeapFull)
+{
+	fixed_priority_queue<int, std::greater<int>> fx_min_queue(5);
+	for (size_t i = 0 ; i < 5 ; i++)
+		EXPECT_TRUE(fx_min_queue.push(std::numeric_limits<int>::max()));
 
-		fx_max_queue.pop();
-		ensure(fx_max_queue.top() == 5);
+	EXPECT_FALSE(fx_min_queue.empty());
+	EXPECT_EQ(fx_min_queue.top(), std::numeric_limits<int>::max());
 
-		fx_max_queue.pop();
-		ensure(fx_max_queue.top() == 1);
+	EXPECT_TRUE(fx_min_queue.push(10));
+	EXPECT_EQ(fx_min_queue.top(), 10);
 
-		fx_max_queue.pop();
-		ensure(fx_max_queue.top() == 0);
+	EXPECT_TRUE(fx_min_queue.push(5));
+	EXPECT_EQ(fx_min_queue.top(), 5);
 
-		fx_max_queue.pop();
-		ensure(fx_max_queue.empty());
-	}
+	EXPECT_TRUE(fx_min_queue.push(7));
+	EXPECT_EQ(fx_min_queue.top(), 5);
 
-	template <> template <>
-	void fixed_priority_queue_test_t::object::test<2>()
-	{
-		set_test_name ("min heap full");
+	EXPECT_TRUE(fx_min_queue.push(-1));
+	EXPECT_EQ(fx_min_queue.top(), -1);
 
-		::fixed_priority_queue<int, std::greater<int>> fx_min_queue(5);
-		for (size_t i = 0 ; i < 5 ; i++)
-			ensure(fx_min_queue.push(std::numeric_limits<int>::max()));
+	EXPECT_TRUE(fx_min_queue.push(0));
+	EXPECT_EQ(fx_min_queue.top(), -1);
 
-		ensure(!fx_min_queue.empty());
-		ensure(fx_min_queue.top() == std::numeric_limits<int>::max());
+	fx_min_queue.pop();
+	EXPECT_EQ(fx_min_queue.top(), 0);
 
-		ensure(fx_min_queue.push(10));
-		ensure(fx_min_queue.top() == 10);
+	fx_min_queue.pop();
+	EXPECT_EQ(fx_min_queue.top(), 5);
 
-		ensure(fx_min_queue.push(5));
-		ensure(fx_min_queue.top() == 5);
+	fx_min_queue.pop();
+	EXPECT_EQ(fx_min_queue.top(), 7);
 
-		ensure(fx_min_queue.push(7));
-		ensure(fx_min_queue.top() == 5);
+	fx_min_queue.pop();
+	EXPECT_EQ(fx_min_queue.top(), 10);
 
-		ensure(fx_min_queue.push(-1));
-		ensure(fx_min_queue.top() == -1);
-
-		ensure(fx_min_queue.push(0));
-		ensure(fx_min_queue.top() == -1);
-
-		fx_min_queue.pop();
-		ensure(fx_min_queue.top() == 0);
-
-		fx_min_queue.pop();
-		ensure(fx_min_queue.top() == 5);
-
-		fx_min_queue.pop();
-		ensure(fx_min_queue.top() == 7);
-
-		fx_min_queue.pop();
-		ensure(fx_min_queue.top() == 10);
-
-		fx_min_queue.pop();
-		ensure(fx_min_queue.empty());
-	}
-};
-
-
-
-
-
-
-
-
-
+	fx_min_queue.pop();
+	EXPECT_TRUE(fx_min_queue.empty());
+}
 
