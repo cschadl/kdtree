@@ -123,7 +123,7 @@ private:
 		return std::sqrt(distance_sq(pt1, pt2));
 	}
 
-	node<PointType> const* get_root() const
+	node<PointType>* get_root()
 	{
 		if (m_nodes.empty())
 			return nullptr;
@@ -131,12 +131,9 @@ private:
 		return &(m_nodes[0]);
 	}
 
-	node<PointType>* get_root()
+	node<PointType> const* get_root() const
 	{
-		if (m_nodes.empty())
-			return nullptr;
-
-		return &(m_nodes[0]);
+		return const_cast< kd_tree<PointType, Dim>& >(*this).get_root();
 	}
 
 public:
