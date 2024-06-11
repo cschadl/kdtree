@@ -151,9 +151,6 @@ public:
 		// We are using the points themselves as the split points,
 		// so the number of nodes in the tree will simply be the
 		// number of points.
-		// TODO - if we somehow add *more* nodes that this (how?)
-		// the resize operation will thrash all of our pointers.
-		// Maybe this should be just a regular array?
 		m_nodes.resize(std::distance(begin, end));
 
 		// root node 0 is the default-constructed node
