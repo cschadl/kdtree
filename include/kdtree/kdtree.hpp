@@ -40,13 +40,13 @@ private:
 	template <typename PointType_>
 	struct node
 	{
-		size_t										n_dim;
-		PointType									val;
+		size_t				n_dim;
+		PointType			val;
 
-		std::unique_ptr< node<PointType_> >	left_child;
-		std::unique_ptr< node<PointType_> >	right_child;
+		node<PointType_>*	left_child;
+		node<PointType_>*	right_child;
 
-		node(size_t dim, PointType val, std::unique_ptr< node<PointType_> > left, std::unique_ptr< node<PointType_> > right)
+		node(size_t dim, PointType val, node<PointType_>* left, node<PointType_>* right)
 		: n_dim(dim)
 		, val(std::move(val))
 		, left_child(std::move(left))
@@ -57,6 +57,8 @@ private:
 
 		node()
 		: n_dim(0)
+		, left_child(nullptr)
+		, right_child(nullptr)
 		{
 
 		}
@@ -65,8 +67,8 @@ private:
 	using node_t = node<PointType>;
 	using value_type = typename point_traits<PointType>::value_type;
 
-	std::unique_ptr<node_t>	m_root;
-	size_t 						m_q_nodes_visited;	// Nodes visited for last query (debugging)
+	std::vector<node<PointType>> 	m_nodes;					// node[0] is the root of the tree
+	size_t 								m_q_nodes_visited;	// Nodes visited for last query (debugging)
 
 	template <typename InputIterator>
 	struct node_stack_entry
@@ -100,7 +102,7 @@ private:
 
 	struct range_search_query
 	{
-		node_t*				node;
+		node_t const*		node;
 		bbox<PointType>	extent;
 	};
 
@@ -121,6 +123,19 @@ private:
 		return std::sqrt(distance_sq(pt1, pt2));
 	}
 
+	node<PointType>* get_root()
+	{
+		if (m_nodes.empty())
+			return nullptr;
+
+		return &(m_nodes[0]);
+	}
+
+	node<PointType> const* get_root() const
+	{
+		return const_cast< kd_tree<PointType, Dim>& >(*this).get_root();
+	}
+
 public:
 	kd_tree()
 		: m_q_nodes_visited(0)
@@ -129,44 +144,20 @@ public:
 	}
 
 	template <typename InputIterator>
-	std::unique_ptr<node_t> build_recursive_(InputIterator begin, InputIterator end, size_t dim)
-	{
-		size_t const n_nodes = std::distance(begin, end);
-		if (n_nodes == 0)
-			return nullptr;
-
-		std::nth_element(begin, begin + n_nodes / 2, end,
-			[dim](auto pt1, auto pt2)
-			{
-				return pt1[dim] < pt2[dim];
-			});
-
-		InputIterator median = begin + n_nodes / 2;
-
-		size_t dim_n = (dim + 1) % Dim;
-
-		return std::make_unique<node_t>(
-				dim,
-				*median,
-				build_recursive_(begin, median, dim_n),
-				build_recursive_(std::next(median), end, dim_n));
-	}
-
-	template <typename InputIterator>
-	void build_recursive(InputIterator begin, InputIterator end)
-	{
-		m_root = build_recursive_(begin, end, 0);
-	}
-
-	template <typename InputIterator>
 	void build(InputIterator begin, InputIterator end)
 	{
 		using ns_entry_t = node_stack_entry<InputIterator>;
 
-		m_root = std::make_unique<node_t>();
+		// We are using the points themselves as the split points,
+		// so the number of nodes in the tree will simply be the
+		// number of points.
+		m_nodes.resize(std::distance(begin, end));
+
+		// root node 0 is the default-constructed node
+		size_t next_node_idx = 1;
 
 		std::stack<ns_entry_t> node_stack;
-		node_stack.emplace(ns_entry_t{m_root.get(), begin, end, 0});
+		node_stack.emplace(ns_entry_t{get_root(), begin, end, 0});
 
 		while (!node_stack.empty())
 		{
@@ -193,84 +184,17 @@ public:
 
 			if (std::distance(entry.begin, median) > 0)
 			{
-				node->left_child = std::make_unique<node_t>();
-				node_stack.emplace(node->left_child.get(), entry.begin, median, dim_n);
+				node->left_child = &(m_nodes[next_node_idx++]);
+				node_stack.emplace(node->left_child, entry.begin, median, dim_n);
 			}
 
 			auto median_1 = std::next(median);
 			if (median_1 != entry.end)
 			{
-				node->right_child = std::make_unique<node_t>();
-				node_stack.emplace(node->right_child.get(), median_1, entry.end, dim_n);
+				node->right_child = &(m_nodes[next_node_idx++]);
+				node_stack.emplace(node->right_child, median_1, entry.end, dim_n);
 			}
 		}
-	}
-
-	void k_nn_recursive_(PointType const& p, size_t const k, node_t* node, detail_::fixed_priority_queue<knn_query>& knn_pq) const
-	{
-		if (!node)
-			return;
-
-		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
-
-		// Get the distance from the p to this node
-		value_type const dist_this_node = distance_sq(p, node->val);
-		knn_pq.push(knn_query{node->val, dist_this_node});
-
-		size_t s = node->n_dim;
-
-		value_type const dist_to_plane = p[s] - node->val[s];
-		value_type const dist_to_plane_sq = dist_to_plane * dist_to_plane;
-
-		if (dist_to_plane <= 0)
-		{
-			// Traverse left, then right if the search sphere crosses the split plane
-			k_nn_recursive_(p, k, node->left_child.get(), knn_pq);
-
-			if (dist_to_plane_sq < knn_pq.bottom().dist)
-				k_nn_recursive_(p, k, node->right_child.get(), knn_pq);
-		}
-		else
-		{
-			k_nn_recursive_(p, k, node->right_child.get(), knn_pq);
-
-			if (dist_to_plane_sq < knn_pq.bottom().dist)
-				k_nn_recursive_(p, k, node->left_child.get(), knn_pq);
-		}
-	}
-
-	std::vector<PointType> k_nn_recursive(PointType const& p, size_t k) const
-	{
-		const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited = 0;
-
-		constexpr value_type max_dist = std::numeric_limits<value_type>::max();
-
-		detail_::fixed_priority_queue<knn_query> knn_pq(k);
-
-		// Initialize max_dist_pt to ( max, max, ..., max)
-		PointType max_dist_pt = point_traits<PointType>::create(max_dist);
-
-		for (size_t i = 0 ; i < k ; i++)
-			knn_pq.push(knn_query{max_dist_pt, max_dist});
-
-		if (!m_root)
-			return { knn_pq.top().point };
-
-		k_nn_recursive_(p, k, m_root.get(), knn_pq);
-
-		std::vector<PointType> k_nn_pts(k, max_dist_pt);
-		size_t i = 0;
-
-		while (!knn_pq.empty())
-		{
-			knn_query const& pt_dist = knn_pq.top();
-			if (pt_dist.dist < max_dist)
-				k_nn_pts[i++] = pt_dist.point;
-
-			knn_pq.pop();
-		}
-
-		return k_nn_pts;
 	}
 
 private:
@@ -285,21 +209,23 @@ private:
 		PointType max_dist_pt = point_traits<PointType>::create(max_val);
 		knn_pq.push(knn_query{max_dist_pt, max_val});
 
-		if (!m_root)
+		if (!get_root())
 			return { knn_pq.top().point };
 
-		using ns_entry_t = std::tuple<node_t*, size_t, value_type>;
+		using ns_search_entry_t = std::tuple<node_t const*, size_t, value_type>;
 
-		std::stack<ns_entry_t> node_stack;
-		value_type const d = p[0] - m_root->val[0];
-		node_stack.emplace(m_root.get(), 0, d * d);
+		node<PointType> const* root_node = get_root();
+
+		std::stack<ns_search_entry_t> node_stack;
+		value_type const d = p[0] - root_node->val[0];
+		node_stack.emplace(root_node, 0, d * d);
 
 		// To search, we explore the tree, pruning nodes that are
 		// too far away from the search point.
 
 		while (!node_stack.empty())
 		{
-			node_t* node;
+			node_t const* node;
 			size_t s;
 			value_type dist_to_plane_sq;
 			std::tie(node, s, dist_to_plane_sq) = node_stack.top();
@@ -332,13 +258,13 @@ private:
 
 			if (dist_this_to_plane <= 0)
 			{
-				node_stack.emplace((node->right_child).get(), node->n_dim, dist_this_to_plane_sq);
-				node_stack.emplace((node->left_child).get(), node->n_dim, value_type(-1));
+				node_stack.emplace(node->right_child, node->n_dim, dist_this_to_plane_sq);
+				node_stack.emplace(node->left_child, node->n_dim, value_type(-1));
 			}
 			else
 			{
-				node_stack.emplace((node->left_child).get(), node->n_dim, dist_this_to_plane_sq);
-				node_stack.emplace((node->right_child).get(), node->n_dim, value_type(-1));
+				node_stack.emplace(node->left_child, node->n_dim, dist_this_to_plane_sq);
+				node_stack.emplace(node->right_child, node->n_dim, value_type(-1));
 			}
 		}
 
@@ -382,7 +308,7 @@ public:
 		PointType max_pt = point_traits<PointType>::create( max_val);
 
 		std::stack<range_search_query> query_stack;
-		query_stack.emplace(range_search_query{m_root.get(), bbox_t(min_pt, max_pt)});
+		query_stack.emplace(range_search_query{get_root(), bbox_t(min_pt, max_pt)});
 
 		std::vector<PointType> points_in_range;
 
@@ -391,7 +317,7 @@ public:
 			range_search_query q = query_stack.top();
 			query_stack.pop();
 
-			node_t* q_n = q.node;
+			node_t const* q_n = q.node;
 			bbox_t const& q_bbox = q.extent;
 
 			if (!q_n)
@@ -410,8 +336,8 @@ public:
 
 			if (q_bbox.split(q_n->n_dim, split_val, left_bbox, right_bbox))
 			{
-				query_stack.emplace(range_search_query{q_n->left_child.get(), left_bbox});
-				query_stack.emplace(range_search_query{q_n->right_child.get(), right_bbox});
+				query_stack.emplace(range_search_query{q_n->left_child, left_bbox});
+				query_stack.emplace(range_search_query{q_n->right_child, right_bbox});
 			}
 		}
 
