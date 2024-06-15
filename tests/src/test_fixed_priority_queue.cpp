@@ -103,3 +103,76 @@ TEST(fixed_priority_queue, MinHeapFull)
 	EXPECT_TRUE(fx_min_queue.empty());
 }
 
+namespace
+{
+	struct thing
+	{
+		std::string name;
+		int val{0};
+
+		thing(std::string const& the_name, int the_val)
+			: name(the_name)
+			, val(the_val)
+		{
+			
+		}
+
+		bool operator<(thing const& t) const
+		{
+			return this->val < t.val;
+		}
+
+		bool operator==(thing const& t) const
+		{
+			return this->name == t.name &&
+				this->val == t.val;
+		}
+	};
+}
+
+TEST(fixed_priority_queue, MaxHeapEmplace)
+{
+	fixed_priority_queue<thing> fx_max_queue(5);
+	EXPECT_TRUE(fx_max_queue.empty());
+	EXPECT_EQ(fx_max_queue.max_size(), 5);
+
+	EXPECT_TRUE(fx_max_queue.emplace("orange", 1));
+	EXPECT_EQ(fx_max_queue.top(), thing("orange", 1));
+
+	EXPECT_TRUE(fx_max_queue.emplace("apple", -3));
+	EXPECT_EQ(fx_max_queue.top(), thing("orange", 1));
+
+	EXPECT_TRUE(fx_max_queue.emplace("pear", 5));
+	EXPECT_EQ(fx_max_queue.top(), thing("pear", 5));
+
+	EXPECT_TRUE(fx_max_queue.emplace("grape", 0));
+	EXPECT_EQ(fx_max_queue.top(), thing("pear", 5));
+
+	EXPECT_TRUE(fx_max_queue.emplace("durian", 7));
+	EXPECT_EQ(fx_max_queue.top(), thing("durian", 7));
+
+	//queue is full
+	EXPECT_TRUE(!fx_max_queue.emplace("jackfruit", -5));	// < lowest priority element, not added
+	EXPECT_EQ(fx_max_queue.top(), thing("durian", 7));
+
+	EXPECT_TRUE(fx_max_queue.emplace("tomato", -1));
+	EXPECT_EQ(fx_max_queue.top(), thing("durian", 7));
+
+	EXPECT_TRUE(fx_max_queue.emplace("blueberry", 10));
+	EXPECT_EQ(fx_max_queue.top(), thing("blueberry", 10));	// Adding this replaces ("tomato", -1) as smallest element
+
+	fx_max_queue.pop();
+	EXPECT_EQ(fx_max_queue.top(), thing("durian", 7));
+
+	fx_max_queue.pop();
+	EXPECT_EQ(fx_max_queue.top(), thing("pear", 5));
+
+	fx_max_queue.pop();
+	EXPECT_EQ(fx_max_queue.top(), thing("orange", 1));
+
+	fx_max_queue.pop();
+	EXPECT_EQ(fx_max_queue.top(), thing("grape", 0));
+
+	fx_max_queue.pop();
+	EXPECT_TRUE(fx_max_queue.empty());
+}

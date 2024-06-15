@@ -16,6 +16,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <utility>
 
 namespace cds
 {
@@ -76,6 +77,33 @@ public:
 		else
 		{
 			m_heap.push_back(t);
+			std::push_heap(m_heap.begin(), m_heap.end(), m_comp);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	template <typename... Args>
+	bool emplace(Args&&... args)
+	{
+		T t(std::forward<Args>(args)...);
+
+		if (size() == max_size())
+		{
+			auto min_element = std::min_element(m_heap.begin(), m_heap.end(), m_comp);
+			if (!m_comp(t, *min_element))
+			{
+				*min_element = std::move(t);
+				std::make_heap(m_heap.begin(), m_heap.end(), m_comp);
+
+				return true;
+			}
+		}
+		else
+		{
+			m_heap.emplace_back(std::move(t));
 			std::push_heap(m_heap.begin(), m_heap.end(), m_comp);
 
 			return true;

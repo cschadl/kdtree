@@ -40,11 +40,11 @@ private:
 	template <typename PointType_>
 	struct node
 	{
-		size_t				n_dim;
+		size_t				n_dim { 0 };
 		PointType			val;
 
-		node<PointType_>*	left_child;
-		node<PointType_>*	right_child;
+		node<PointType_>*	left_child { nullptr };
+		node<PointType_>*	right_child { nullptr };
 
 		node(size_t dim, PointType val, node<PointType_>* left, node<PointType_>* right)
 		: n_dim(dim)
@@ -55,13 +55,7 @@ private:
 
 		}
 
-		node()
-		: n_dim(0)
-		, left_child(nullptr)
-		, right_child(nullptr)
-		{
-
-		}
+		node() = default;
 	};
 
 	using node_t = node<PointType>;
@@ -93,6 +87,15 @@ private:
 		PointType	point;
 		value_type	dist;
 
+		knn_query(PointType const& the_point, value_type the_dist)
+			: point(the_point)
+			, dist(the_dist)
+		{
+
+		}
+
+		knn_query() = default;
+
 		bool operator<(const knn_query& rhs) const
 		{
 			// Backwards, for min-priority queue
@@ -102,8 +105,17 @@ private:
 
 	struct range_search_query
 	{
-		node_t const*		node;
+		node_t const*		node { nullptr };
 		bbox<PointType>	extent;
+
+		range_search_query(node_t const* the_node, bbox<PointType> const& the_extent)
+			: node(the_node)
+			, extent(the_extent)
+		{
+
+		}
+
+		range_search_query() = default;
 	};
 
 	static typename point_traits<PointType>::value_type distance_sq(PointType const& pt1, PointType const& pt2)
@@ -157,7 +169,7 @@ public:
 		size_t next_node_idx = 1;
 
 		std::stack<ns_entry_t> node_stack;
-		node_stack.emplace(ns_entry_t{get_root(), begin, end, 0});
+		node_stack.emplace(get_root(), begin, end, 0);
 
 		while (!node_stack.empty())
 		{
@@ -207,7 +219,7 @@ private:
 		// Initialize max_dist_pt to ( max, max, ..., max )
 		constexpr value_type max_val = std::numeric_limits<value_type>::max();
 		PointType max_dist_pt = point_traits<PointType>::create(max_val);
-		knn_pq.push(knn_query{max_dist_pt, max_val});
+		knn_pq.emplace(max_dist_pt, max_val);
 
 		if (!get_root())
 			return { knn_pq.top().point };
@@ -249,7 +261,7 @@ private:
 			// Get the distance from the p to this node
 			value_type const dist_this_node = distance_sq(p, node->val);
 			if (dist_this_node < max_dist_sq)
-				knn_pq.push(knn_query{node->val, dist_this_node});
+				knn_pq.emplace(node->val, dist_this_node);
 
 			const_cast<kd_tree<PointType, Dim>&>(*this).m_q_nodes_visited++;
 
@@ -308,7 +320,7 @@ public:
 		PointType max_pt = point_traits<PointType>::create( max_val);
 
 		std::stack<range_search_query> query_stack;
-		query_stack.emplace(range_search_query{get_root(), bbox_t(min_pt, max_pt)});
+		query_stack.emplace(get_root(), bbox_t(min_pt, max_pt));
 
 		std::vector<PointType> points_in_range;
 
@@ -336,8 +348,8 @@ public:
 
 			if (q_bbox.split(q_n->n_dim, split_val, left_bbox, right_bbox))
 			{
-				query_stack.emplace(range_search_query{q_n->left_child, left_bbox});
-				query_stack.emplace(range_search_query{q_n->right_child, right_bbox});
+				query_stack.emplace(q_n->left_child, left_bbox);
+				query_stack.emplace(q_n->right_child, right_bbox);
 			}
 		}
 
