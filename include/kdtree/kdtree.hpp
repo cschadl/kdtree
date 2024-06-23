@@ -67,7 +67,7 @@ private:
 	template <typename InputIterator>
 	struct node_stack_entry
 	{
-		node_t* 			node;
+		node_t* 			node { nullptr };
 		InputIterator	begin;
 		InputIterator	end;
 		size_t			dim;
@@ -80,6 +80,8 @@ private:
 		{
 
 		}
+
+		node_stack_entry() = default;
 	};
 
 	struct knn_query
