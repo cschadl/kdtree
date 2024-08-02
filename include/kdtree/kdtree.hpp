@@ -239,10 +239,7 @@ private:
 
 		while (!node_stack.empty())
 		{
-			node_t const* node;
-			size_t s;
-			value_type dist_to_plane_sq;
-			std::tie(node, s, dist_to_plane_sq) = node_stack.top();
+			auto [node, s, dist_to_plane_sq] = node_stack.top();
 
 			node_stack.pop();
 
